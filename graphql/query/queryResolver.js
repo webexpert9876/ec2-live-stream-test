@@ -1,0 +1,744 @@
+const channelModel = require('../../models/channelModel');
+const chatMessageModel = require('../../models/chatMessageModel');
+const commentModel = require('../../models/commentModel');
+const followerModel = require('../../models/followerModel');
+const userModel = require('../../models/userModel');
+const videoModel = require('../../models/videoModel');
+const likeAndDislikeModel = require('../../models/likeAndDislikeModel');
+const membershipPlansModel = require('../../models/membershipPlansModel');
+const playlistModel = require('../../models/playlistModel');
+const replyModel = require('../../models/replyModel');
+const roleModel = require('../../models/roleModel');
+const searchHistoryModel = require('../../models/searchHistoryModel');
+const streamModel = require('../../models/streamModel');
+const subscriptionDetailModel = require('../../models/subscriptionDetailModel');
+const tattooCategoryModel = require('../../models/tattooCategoryModel');
+const videoHistoryModel = require('../../models/videoHistoryModel');
+const tattooCategoryFollowerModel = require('../../models/tattooCategoryFollowerModel');
+const liveStreamingModel = require('../../models/liveStreamingModel');
+const tagModel = require('../../models/tagModel');
+const ObjectId = require('mongoose').Types.ObjectId;
+
+// return all user with role details based on ( role or user id and if role or user id is not provided it return all users )
+const getAllUsers = async (parent, args)=>{
+    let users;
+    
+    if(args.role){
+        users =  await userModel.find({role: new ObjectId(args.role)});
+    } else if(args.id){
+        users =  await userModel.aggregate([
+            { $match: { _id: new ObjectId(args.id) } },
+            {
+              $lookup: {
+                from: 'roles', // The collection name for the Role model
+                localField: 'role',
+                foreignField: '_id',
+                as: 'roleDetails'
+              }
+            },
+            {
+                $lookup: {
+                  from: 'tattoocategories',
+                  localField: 'interestStyles',
+                  foreignField: '_id',
+                  as: 'interestedStyleDetail'
+                }
+            },
+            {
+                $lookup: {
+                  from: 'channels',
+                  localField: 'channelId',
+                  foreignField: '_id',
+                  as: 'channelDetails'
+                }
+            }
+            // {
+            //     $project:{
+            //         password:0,
+            //         "role._id": 0,
+            //         "role.createdAt": 0,
+            //         "role.updatedAt": 0,
+            //         "role.__v": 0,
+            //     }
+            // }
+        ]);
+    } else {
+        users =  await userModel.find({});
+    }
+    return users
+}
+
+// const getSingleChannel = async (parent, args)=>{
+//     const channel =  await channelModel.findById(args.id);
+//     return channel
+// }
+
+// return all channels and return single channel if channel id is provided
+const getAllChannels = async (parent, args)=>{
+    let channel;
+    let query = {};
+    if(args.id){
+        query = {_id: args.id}
+        // channel =  await channelModel.find({_id: new ObjectId(args.id)});
+    } else if(args.urlSlug) {
+        query = {urlSlug: args.urlSlug}
+        // channel =  await channelModel.find({});
+    } else if(args.userId) {
+        query = {userId: args.userId}
+        // channel =  await channelModel.find({});
+    }
+
+    channel = await channelModel.find(query);
+
+    return channel
+}
+
+const getAllChatMessages = async(parent, args)=>{
+    
+    const chatMessage =  await chatMessageModel.aggregate([
+        {
+            $match: {videoId: {$eq : new ObjectId(args.videoId)}}
+        },
+        {
+            $sort: {createdAt: 1}
+        },
+        // {
+        //     $limit: 10 * args.limit?parseInt(args.limit):10
+        // },
+        {
+            $lookup: {
+                from: 'users',
+                localField: 'userId',
+                foreignField: '_id',
+                as: 'userDetail'
+            }
+        },
+        {
+            $project: {
+                _id: 1,
+                userId: 1,
+                message: 1,
+                videoId: 1,
+                userDetail: 1,
+                hours: { $hour: '$createdAt' },
+                mins: { $minute: '$createdAt' }
+            }
+        }
+    ]);
+
+    return chatMessage
+}
+
+const getVideoByUserIdOrTattooCategoryId = async(parent, args)=>{
+    let query = {};
+    
+    if(args.tattooCategoryId && args.userId){
+        query = {
+            $and:[
+                { userId: {$eq: new ObjectId(args.userId)} },
+                { tattooCategoryId: {$eq: new ObjectId(args.tattooCategoryId)} }
+            ]
+        }
+    } else if(args.videoId){
+        query = { _id: {$eq: new ObjectId(args.videoId)} }
+    } else if(args.userId){
+        query = { userId: {$eq: new ObjectId(args.userId)} }
+    } else if(args.tattooCategoryId) {
+        query = { tattooCategoryId: {$eq: new ObjectId(args.tattooCategoryId)} }
+    }
+
+    // const videos = await videoModel.find(query);
+    const videos = await videoModel.aggregate([
+        {
+            $match: query
+        },
+        {
+            $lookup:{
+                from: 'channels',
+                localField: 'channelId',
+                foreignField: '_id',
+                as: 'channelDetails'
+            }
+        },
+        {
+            $lookup: {
+                from: 'tattoocategories',
+                foreignField: '_id',
+                localField: 'tattooCategoryId',
+                as: 'tattooCategoryDetails'
+            }
+        },
+    ]);
+    return videos
+}
+
+const getRecentLiveStreamVideos = async(parent, args)=>{
+
+    const videos = await videoModel.find({$and:[{userId: args.userId}, {isStreamed: true}, {isUploaded: false}]}).sort({createdAt: -1}).limit(11);
+    return videos
+}
+
+const getUserLastLiveStreamVideo = async(parent, args)=>{
+
+    const videos = await videoModel.find({$and:[{userId: args.userId}, {isStreamed: true}, {isUploaded: false}]}).sort({createdAt: -1}).limit(1);
+    return videos
+}
+
+const getRecentUploadedVideos = async(parent, args)=>{
+
+    const recentVideos = await videoModel.find({$and:[{userId: args.userId}, {isUploaded: true}, {isStreamed: false}]}).sort({createdAt: -1}).limit(11);
+    return recentVideos
+}
+
+const getComments = async(parent, args)=>{
+    let query = {};
+    if(args.videoId){
+        query = {videoId: new ObjectId(args.videoId)};
+    } else if(args.id){
+        query = {_id: new ObjectId(args.id)};
+    }
+    
+    const comments = await commentModel.find(query);
+
+    return comments
+}
+
+const getFollowers = async(parent, args)=>{
+    let query = {};
+    if(args.channelId){
+        query = {channelId: new ObjectId(args.channelId)};
+    } else if(args.id){
+        query = {_id: new ObjectId(args.id)};
+    }
+    
+    // const followers = await followerModel.find(query);
+    const followers = await followerModel.aggregate([
+        { 
+            $match: query 
+        },
+        {
+            $lookup: {
+                from: 'users',
+                localField: 'userId',
+                foreignField: '_id',
+                as: 'userDetails'
+            }
+        },
+        {
+            $lookup: {
+              from: 'channels',
+              localField: 'channelId',
+              foreignField: '_id',
+              as: 'channelDetails'
+            }
+        }
+    ]);
+
+    return followers
+}
+
+const getLikeAndDislike = async(parent, args)=>{
+
+    let likesAndDislikesCounts;
+    let totalCount;
+    
+    if(args.videoId){
+        
+        totalCount = await likeAndDislikeModel.aggregate([
+            { $facet: {
+              total_like: [
+                { $match : {$and:[
+                    { videoId: {$eq: new ObjectId(args.videoId)} },
+                    { isLike: true }
+                ]}},
+                { $count: "isLike" },
+              ],
+              total_dislike: [
+                { $match : {$and:[
+                    { videoId: {$eq: new ObjectId(args.videoId)} },
+                    { isDislike: true }
+                ]}},
+                { $count: "isDislike" }
+              ]
+            }},
+            { $project: {
+                "totalLikes": { $arrayElemAt: ["$total_like.isLike", 0] },
+                "totalDislikes": { $arrayElemAt: ["$total_dislike.isDislike", 0] }
+            }}
+        ]);
+
+        likesAndDislikesCounts =  [
+            {
+                totalLikeAndDislike: totalCount
+            }
+        ]
+    } else if(args.id){
+        likesAndDislikesCounts = await likeAndDislikeModel.find({_id: new ObjectId(args.id)});
+    }
+
+    return likesAndDislikesCounts
+}
+
+const getMembershipPlans = async (parent, args)=>{
+    let membershipPlans;
+    if(args.id){
+        membershipPlans =  await membershipPlansModel.find({_id: new ObjectId(args.id)});
+    } else {
+        membershipPlans =  await membershipPlansModel.find({});
+    }
+
+    return membershipPlans
+}
+
+const getPlaylists = async (parent, args)=>{
+    let query = {};
+
+    if(args.userId){
+        query = {userId: new ObjectId(args.userId)};
+    } else if(args.id){
+        query = {_id: new ObjectId(args.id)};
+    }
+    
+    const playlist = await playlistModel.find(query);
+
+    return playlist
+}
+
+const getReplies = async (parent, args)=>{
+    let query = {};
+
+    if(args.commentId){
+        query = {commentId: new ObjectId(args.commentId)};
+    } else if(args.id){
+        query = {_id: new ObjectId(args.id)};
+    }
+    
+    const replies = await replyModel.find(query);
+
+    return replies
+}
+
+const getRoles = async (parent, args)=>{
+    let query = {};
+
+    if(args.id){
+        query = {_id: new ObjectId(args.id)};
+    }
+    
+    const roles = await roleModel.find(query);
+
+    return roles
+}
+
+const getSearchHistory = async (parent, args)=>{
+    let searchQuery = {userId: args.userId}
+
+    if(args.t){
+        searchQuery = {
+            $and:[
+                {userId: args.userId},
+                {searchText: { $regex: args.t, $options: 'i'}}
+            ]
+        };
+    }
+
+    let allSearchHistory;
+
+    if(args.skip && args.limit){
+        allSearchHistory = await searchHistoryModel.find(searchQuery).skip(parseInt(args.skip)).limit(parseInt(args.limit)).sort({createdAt: -1})
+    } else if(args.skip){
+        allSearchHistory = await searchHistoryModel.find(searchQuery).skip(parseInt(args.skip)).sort({createdAt: -1})
+    } else if(args.limit){
+        allSearchHistory = await searchHistoryModel.find(searchQuery).limit(parseInt(args.limit)).sort({createdAt: -1})
+    } else {
+        allSearchHistory = await searchHistoryModel.find(searchQuery).sort({createdAt: -1})
+    }
+
+    return allSearchHistory
+}
+
+const getStreams = async (parent, args)=>{
+
+    const streams = await streamModel.find({artistId: new ObjectId(args.artistId)});
+    
+    return streams
+}
+
+const getSubscriptionDetails = async (parent, args)=>{
+    let query = {};
+
+    if(args.id){
+        query = {_id: new ObjectId(args.id)};
+    }
+    
+    const subscriptionDetails = await subscriptionDetailModel.find(query);
+
+    return subscriptionDetails
+}
+
+const getTattooCategories = async (parent, args)=>{
+    let query = {};
+
+    if(args.id){
+        query = {_id: new ObjectId(args.id)};
+    } else if(args.tagName) {
+        query = {tags: {$in: [...args.tagName]}};
+    } else if (args.urlSlug){
+        query = {urlSlug: args.urlSlug};
+    }
+    
+    const tattooCategories = await tattooCategoryModel.find(query);
+
+    return tattooCategories
+}
+
+const getVideoHistories = async (parent, args)=>{
+
+    const skip = args.skip? args.skip : 0;
+    const limit = args.limit? args.limit : 10;
+
+    let pagination=[{ $match: { userId: {$eq: new ObjectId(args.userId)} }}];
+    
+    if(skip && limit){
+        pagination.push({ $skip: skip });
+        pagination.push({ $limit: limit });
+    } else if(skip){
+        pagination.push({ $skip: skip });
+    } else if(limit){
+        pagination.push({ $limit: limit });
+    }
+
+    const allVideoHistory = await videoHistoryModel.aggregate([
+        ...pagination,
+        { $sort: { createdAt: -1 } },
+        {
+            $lookup:{
+                from: 'videos',
+                localField: 'videoId',
+                foreignField: '_id',
+                as: 'videoDetails'
+            }
+        },
+        // {
+        //     $project:{
+        //         _id: 1,
+        //         userId: 1,
+        //         createdAt: 1,
+        //         updatedAt: 1,
+        //         'videoDetails._id':1,
+        //         'videoDetails.title':1,
+        //         'videoDetails.description':1,
+        //         'videoDetails.videoPreviewImage':1
+        //     }
+        // }
+    ]);
+
+    return allVideoHistory
+}
+
+// Only return Total followers of single tattoo category.
+const countFollowerByTattooCategoryId = async( parent, args)=>{
+    let countTattooCategoryFollower = [{
+        countFollower: 0
+    }];
+    countTattooCategoryFollower[0].countFollower = await tattooCategoryFollowerModel.countDocuments({tattooCategoryId: args.tattooCategoryId});
+    return countTattooCategoryFollower
+};
+
+// Return single user following tattoo category or not and return only true or false
+const isTattooCategoryFollowingByUser = async(parent, args)=>{
+    let isFollowingByUser = [{
+        _id: null,
+        isFollowing: false
+    }];
+
+    const data = await tattooCategoryFollowerModel.findOne({$and:[
+        {userId: args.userId},
+        {tattooCategoryId: args.tattooCategoryId}
+    ]});
+
+    if(data != null){
+        isFollowingByUser[0]._id = data._id
+        isFollowingByUser[0].isFollowing = true
+    }
+
+    return isFollowingByUser
+};
+
+const getLiveStreamings = async(parent, args) =>{
+    let query = {}
+
+    if(args.tattooCategoryId){
+        query = {tattooCategory: new ObjectId(args.tattooCategoryId)};
+    } else if (args.tagName){
+        query = {tags: {$in: [args.tagName]}};
+    } else if(args.channelId){
+        query = {channelId: new ObjectId(args.channelId)};
+    }
+
+    const liveStreams = await liveStreamingModel.aggregate([
+        {
+            $match: query
+        },
+        {
+            $lookup: {
+                    from: 'channels',
+                    foreignField: '_id',
+                    localField: 'channelId',
+                    as: 'channelDetails'
+                }
+        },
+        {
+            $lookup: {
+                from: 'tattoocategories',
+                foreignField: '_id',
+                localField: 'tattooCategory',
+                as: 'tattooCategoryDetails'
+            }
+        },
+        {
+            $sort: {createdAt: -1}
+        }
+    ]);
+
+    return liveStreams
+}
+
+const getSliderLiveStreamings = async(parent, args) =>{
+    // let query = {}
+
+    // if(args.tattooCategoryId){
+    //     query = {tattooCategory: new ObjectId(args.tattooCategoryId)};
+    // } else if (args.tagName){
+    //     query = {tags: {$in: [args.tagName]}};
+    // } else if(args.channelId){
+    //     query = {channelId: new ObjectId(args.channelId)};
+    // }
+
+    const liveStreams = await liveStreamingModel.aggregate([
+        {
+            $sample: {size: 10}
+        },
+        {
+            $lookup: {
+                    from: 'channels',
+                    foreignField: '_id',
+                    localField: 'channelId',
+                    as: 'channelDetails'
+                }
+        },
+        {
+            $lookup: {
+                from: 'tattoocategories',
+                foreignField: '_id',
+                localField: 'tattooCategory',
+                as: 'tattooCategoryDetails'
+            }
+        },
+        {
+            $sort: {createdAt: -1}
+        }
+    ]);
+
+    return liveStreams
+}
+
+const getSingleTattooCategoryAllViewers = async (parent, args) =>{
+    const allViewers = await liveStreamingModel.aggregate([
+        {
+            $match: {
+                tattooCategory: {$eq: new ObjectId(args.tattooCategoryId)}
+            }
+        },
+        {
+            $group: {
+                _id: null,
+                singleCategoryAllViewers: {$sum: '$viewers'}
+            }
+        }
+    ])
+
+    return allViewers
+}
+
+const countChannelFollowersByChannelId = async (parent, args)=>{
+    // const totalFollowers = await followerModel.count()
+    let countChannelTotalFollowers = [{
+        countFollower: 0
+    }];
+    countChannelTotalFollowers[0].countFollower = await followerModel.countDocuments({channelId: args.channelId});
+    return countChannelTotalFollowers
+}
+
+
+const isChannelFollowingByUser = async(parent, args)=>{
+    let isFollowingByUser = [{
+        _id: null,
+        isFollowing: false
+    }];
+
+    const data = await followerModel.findOne({$and:[
+        {userId: args.userId},
+        {channelId: args.channelId}
+    ]});
+
+    if(data != null){
+        isFollowingByUser[0]._id = data._id
+        isFollowingByUser[0].isFollowing = data.isFollowing
+        isFollowingByUser[0].channelId = data.channelId
+        isFollowingByUser[0].userId = data.userId
+    }
+
+    return isFollowingByUser
+};
+
+const getTags = async(parent, args)=>{
+    // const tagList = await tagModel.find({});
+    const tagList = await tagModel.aggregate([
+        {
+          $project: {
+            _id: 0, // Exclude the default _id field
+            id: '$name',
+            text: '$name'
+          }
+        }
+      ])
+    return tagList
+};
+
+const getVideoByTag = async(parent, args)=>{
+
+    const videos = await videoModel.aggregate([
+        {
+            $match: { tags: {$in: [args.tags]} }
+        },
+        { "$sort": {createdAt: -1} },
+        { "$limit": args.limit },
+        { "$skip": args.skip },
+        {
+            $lookup:{
+                from: 'channels',
+                localField: 'channelId',
+                foreignField: '_id',
+                as: 'channelDetails'
+            }
+        },
+        {
+            $lookup: {
+                from: 'tattoocategories',
+                foreignField: '_id',
+                localField: 'tattooCategoryId',
+                as: 'tattooCategoryDetails'
+            }
+        }
+    ]);
+
+    return videos
+}
+
+const getVideoByTagCount =async (parent, args)=>{
+    let videoByTagCount=[{
+        count: 0
+    }];
+    videoByTagCount[0].count = await videoModel.countDocuments({tags: {$in: args.tags}});
+    return videoByTagCount
+}
+
+const getChannelForSearch = async (parent, args)=>{
+    // const channelsInfo = await channelModel.find({channelName: { $regex: new RegExp(args.channelName, 'i') }});
+    let searchBar = [{
+        channel: [],
+        videos: []
+    }];
+    const searchedChannel = await channelModel.findOne({channelName: args.searchString});
+    searchBar[0].channel.push(searchedChannel);
+    
+    if(searchedChannel){
+        const videosData = await videoModel.aggregate([
+            {
+                $match: { channelId: {$eq: new ObjectId(searchedChannel._id)} }
+            },
+            { "$sort": {createdAt: -1} },
+            { "$limit": 25 },
+            {
+                $lookup:{
+                    from: 'channels',
+                    localField: 'channelId',
+                    foreignField: '_id',
+                    as: 'channelDetails'
+                }
+            },
+            {
+                $lookup: {
+                    from: 'tattoocategories',
+                    foreignField: '_id',
+                    localField: 'tattooCategoryId',
+                    as: 'tattooCategoryDetails'
+                }
+            }
+        ])
+        searchBar[0].videos.push(...videosData);
+    } else {
+        const videosData = await videoModel.aggregate([
+            {
+                $match:  { title: { $regex: new RegExp(args.searchString, 'i') } } 
+            },
+            { "$sort": {createdAt: -1} },
+            { "$limit": 25 },
+            {
+                $lookup:{
+                    from: 'channels',
+                    localField: 'channelId',
+                    foreignField: '_id',
+                    as: 'channelDetails'
+                }
+            },
+            {
+                $lookup: {
+                    from: 'tattoocategories',
+                    foreignField: '_id',
+                    localField: 'tattooCategoryId',
+                    as: 'tattooCategoryDetails'
+                }
+            }
+        ])
+        searchBar[0].videos.push(...videosData);
+    }
+    return searchBar
+}
+
+
+const Query = {
+    users: getAllUsers,
+    channels: getAllChannels,
+    chatMessages: getAllChatMessages,
+    videos: getVideoByUserIdOrTattooCategoryId,
+    recentLiveStreamVideos: getRecentLiveStreamVideos,
+    recentUploadedVideos: getRecentUploadedVideos,
+    getLastLiveStreamVideo: getUserLastLiveStreamVideo,
+    comments: getComments,
+    followers: getFollowers,
+    likesAndDislikes: getLikeAndDislike,
+    membershipPlans: getMembershipPlans,
+    playlists: getPlaylists,
+    replies: getReplies,
+    roles: getRoles,
+    searchHistory: getSearchHistory,
+    streams: getStreams,
+    subscriptionDetails: getSubscriptionDetails,
+    tattooCategories: getTattooCategories,
+    videoHistories: getVideoHistories,
+    countTattooCategoryFollower: countFollowerByTattooCategoryId,
+    isTattooCategoryFollowing: isTattooCategoryFollowingByUser,
+    liveStreamings: getLiveStreamings,
+    getSliderLiveStreams: getSliderLiveStreamings,
+    getTattooCategoryAllViewers: getSingleTattooCategoryAllViewers,
+    countChannelTotalFollowers: countChannelFollowersByChannelId,
+    isChannelFollowing: isChannelFollowingByUser,
+    tagForStream: getTags,
+    videoByTag: getVideoByTag,
+    videoByTagCount: getVideoByTagCount,
+    searchBar: getChannelForSearch
+}
+
+module.exports = Query;

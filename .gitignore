@@ -1,0 +1,6 @@
+/node_modules
+config/.env
+/uploads
+/media
+/ffmpeg-2023-05-15-git-2953ebe7b6-full_build
+/logs

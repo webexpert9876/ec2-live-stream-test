@@ -1,0 +1,310 @@
+const NodeMediaServer = require('node-media-server');
+const config = require('./config/serverConfig');
+var fs = require('fs');
+const util = require('util');
+var path = require('path');
+const { v4: uuidv4 } = require('uuid');
+const videoModel = require('./models/videoModel');
+const streamModel = require('./models/streamModel');
+const liveStreamingModel = require('./models/liveStreamingModel');
+const ErrorHandler = require('./utils/errorHandler');
+const { S3, PutObjectCommand } = require("@aws-sdk/client-s3");
+const { dashLogger } = require("./log");
+const { generateStreamThumbnail } = require('./utils/generateThumbnail');
+
+var nms = new NodeMediaServer(config);
+// var uniqueVideoKey = uuidv4();
+
+
+nms.on('preConnect', (id, args) => {
+  // console.log('[NodeEvent on preConnect]', `id=${id} args=${JSON.stringify(args)}`);
+  // let session = nms.getSession(id);
+  // session.reject();
+});
+
+nms.on('postConnect', (id, args) => {
+  // console.log('[NodeEvent on postConnect]', `id=${id} args=${JSON.stringify(args)}`);
+});
+
+nms.on('doneConnect', (id, args) => {
+  // console.log('[NodeEvent on doneConnect]', `id=${id} args=${JSON.stringify(args)}`);
+});
+
+nms.on('prePublish', async (id, StreamPath, args) => {
+  // console.log('[NodeEvent on prePublish]', `id=${id} StreamPath=${StreamPath} args=${JSON.stringify(args)}`);
+  // console.log('[NodeEvent on prePublish]', `args=${JSON.stringify(args)}`);
+  try {
+    let stream_key = getStreamKeyFromStreamPath(StreamPath);
+    var uniqueVideoKey = uuidv4();
+    var streamDetails = await streamModel.findOne({streamKey: stream_key});
+  
+    var videoDetails;
+    var videoCreated;
+    
+    if(streamDetails  != null){
+    //   const videoQualityUrl = [{
+    //     quality: `360`,
+    //     url: `${uniqueVideoKey}_640.mp4`
+    //   },
+    //   {
+    //     quality: `640`,
+    //     url: `${uniqueVideoKey}_854.mp4`
+    //   },
+    //   {
+    //     quality: `720`,
+    //     url: `${uniqueVideoKey}_1280.mp4`
+    //   }
+    // ];
+      videoDetails = {
+        title: streamDetails.title,
+        description: streamDetails.description,
+        userId: streamDetails.artistId,
+        channelId: streamDetails.channelId,
+        tattooCategoryId: streamDetails.streamCategory,
+        url: `${uniqueVideoKey}.mp4`,
+        // videoQualityUrl: [...videoQualityUrl],
+        streamId: streamDetails._id,
+        isStreamed: true,
+        isPublished: true,
+        videoPreviewStatus: 'subscriber',
+        tags: streamDetails.tags,
+        videoPreviewImage: streamDetails.streamPreviewImage? streamDetails.streamPreviewImage: undefined
+      }
+      videoCreated = await videoModel.create(videoDetails);
+      console.log("videoDetails", videoCreated)
+  
+      let liveStreamDetails = {
+        title: streamDetails.title,
+        description: streamDetails.description,
+        streamUrl: `http://127.0.0.1:8000/live/${stream_key}/index.m3u8`,
+        tags: streamDetails.tags,
+        tattooCategory: streamDetails.streamCategory,
+        userId: streamDetails.artistId,
+        channelId: streamDetails.channelId,
+        videoId: videoCreated._id,
+        streamKey: stream_key,
+        videoPoster: streamDetails.streamPreviewImage? streamDetails.streamPreviewImage: undefined
+      }
+      
+      const liveStreamData = await liveStreamingModel.create(liveStreamDetails);
+      console.log("liveStreamDetails", liveStreamData)
+
+      if(!stream_key.match(/_[0-9]+$/)){
+        console.log('stream_key', stream_key)
+        // const liveStreamDetail = await liveStreamingModel.findOne({streamKey: stream_key});
+        // console.log('liveStreamDetail', liveStreamDetail)
+        
+        // const videoDetails = await videoModel.findById(liveStreamDetail.videoId);
+        // console.log('videoDetails', videoDetails)
+    
+        if(!streamDetails.streamPreviewImage){
+          setTimeout(()=>{
+            generateStreamThumbnail(stream_key, liveStreamData, videoCreated);
+          }, 10000)
+        }
+        // else {
+
+        //   videoCreated.videoPreviewImage = streamDetails.streamPreviewImage
+        //   await videoCreated.save({validateBeforeSave: false});
+
+        //   liveStreamData.videoPoster = streamDetails.streamPreviewImage
+        //   await liveStreamData.save({validateBeforeSave: false});
+          
+        // }
+
+        // testing code start
+        // const liveStreamDetail = await liveStreamingModel.findOne({streamKey: stream_key});
+        // console.log('liveStreamDetail', liveStreamDetail)
+        
+        // const videoDetails = await videoModel.findById(liveStreamDetail.videoId);
+        // console.log('videoDetails', videoDetails)
+    
+        // if(liveStreamDetail.videoPoster){
+        //   videoDetails.videoPreviewImage = liveStreamDetail.videoPoster
+        //   await videoDetails.save({validateBeforeSave: false});
+        // } else {
+        //   setTimeout(()=>{
+        //     generateStreamThumbnail(stream_key, liveStreamDetail, videoDetails);
+        //   }, 10000)
+        // }
+    
+        // if(!liveStreamDetail.videoPoster && !videoDetails.videoPreviewImage){
+        //   // if(stream_key == '127b8dc3-637a-49c2-8f13-58af4cb565c2'){
+        //   // }
+        //   // setTimeout(()=>{
+        //   //   generateStreamThumbnail(stream_key);
+        //   // }, 10000)
+        // } else {
+        //   console.log('else' )
+        // }
+        // testing code end
+      }
+
+    }
+  } catch(error) {
+    console.log(error);
+    // new ErrorHandler(`${error.message} live stream details not found`, 404);
+    // throw new Error('live stream details not found');
+    dashLogger.error(`${error.message}, path : ${error.stack}`);
+  }
+  
+});
+
+nms.on('postPublish',async (id, StreamPath, args) => {
+  // console.log('[NodeEvent on postPublish]', `id=${id} StreamPath=${StreamPath} args=${JSON.stringify(args)}`);
+});
+
+nms.on('donePublish', async (id, StreamPath, args) => {
+  // console.log('[NodeEvent on donePublish]', `id=${id} StreamPath=${StreamPath} args=${JSON.stringify(args)}`);
+  try {
+    let isQualityVideo = false; 
+    const unlinkFile = util.promisify(fs.unlink);
+    let stream_key = getStreamKeyFromStreamPath(StreamPath);
+  
+    var extractStreamKey = stream_key.substring(0, stream_key.indexOf('_'));
+  
+    var streamDetails = await streamModel.findOne({streamKey: extractStreamKey? extractStreamKey: stream_key});
+  
+    var videoDetails = await videoModel.find({streamId: streamDetails._id}).sort({createdAt: -1}).limit(1);
+  
+    var liveStreamData;
+  
+    if(streamDetails.streamKey == stream_key){
+  
+      liveStreamData = await liveStreamingModel.findOne({
+        $and:[
+          {userId: streamDetails.artistId},
+          {streamKey: streamDetails.streamKey }
+        ]
+      });
+
+      if(!liveStreamData){
+        return new ErrorHandler('live stream details not found', 404);
+      }
+  
+      await liveStreamingModel.findByIdAndDelete(liveStreamData._id);
+  
+    }
+  
+    var uniqueVideoKey = videoDetails[0].url.substring(0, videoDetails[0].url.indexOf('.'));
+  
+    var videoQualityObj = {};
+    const s3 = new S3({
+      region:process.env.AWS_REGION,
+      credentials:{
+          accessKeyId: process.env.AWS_ACCESS_KEY,
+          secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
+      }
+    });
+  
+    const directoryPath = path.join(__dirname, 'media/live/'+ stream_key);
+    
+    const bucketName = process.env.AWS_BUCKET_NAME;
+  
+    setTimeout(async ()=>{
+      try{
+        fs.readdir(directoryPath, async function (err, files) {
+          // handling error
+          if (err) {
+            return console.log('Unable to scan directory: ' + err);
+          }
+    
+          files.forEach(async (file) => {
+    
+            if(file.includes(".mp4")){
+    
+              const fileStream = fs.createReadStream(`${directoryPath}/${file}`)
+              var extQuality = stream_key.substring(stream_key.indexOf('_') + 1);
+    
+              let newUniqueVideoName = uniqueVideoKey;
+    
+              if(extQuality.length <5){
+    
+                newUniqueVideoName = `${uniqueVideoKey}_${extQuality}`
+                
+                isQualityVideo = true;
+                videoQualityObj ={
+                  quality: extQuality,
+                  url: `${newUniqueVideoName}.mp4`
+                };
+              }
+    
+              const bucketParams = {
+                Bucket: bucketName,
+                Key: `videos/${newUniqueVideoName}.mp4`, // Set the desired file name
+                Body: fileStream
+              };
+    
+              const command = await new PutObjectCommand(bucketParams);
+              
+              await s3.send(command).then(async (data)=>{
+                console.log(data);
+                if(isQualityVideo){
+    
+                  const updatedVideo = await videoModel.findByIdAndUpdate(videoDetails[0]._id, {$push: {videoQualityUrl: videoQualityObj}},{
+                    new: true,
+                    runValidators: true,
+                    useFindAndModify: false,
+                  });
+    
+                }
+    
+                if(data.$metadata.httpStatusCode == 200) {
+                  await unlinkFile(`${__dirname}/media/live/${stream_key}/${file}`).then(async (data)=>{
+                    await fs.rmdirSync(`${__dirname}/media/live/${stream_key}`);
+                  });
+    
+                }
+              })
+              .catch(async(error)=>{
+                console.log('error', error);
+                dashLogger.error(`${error.message}, path : ${error.stack}`);
+              });
+            }  
+          });
+        });
+      } catch(error){
+        dashLogger.error(`${error.message}, path : ${error.stack}`);
+      }
+    }, 0)
+  } catch(error){
+    dashLogger.error(`${error.message}, path : ${error.stack}`);
+  }
+
+  // moves the $file to $dir2
+  // var moveFile = (file, dir2)=>{
+  
+  //   //gets file name and adds it to dir2
+  //   var f = path.basename(file);
+  //   var dest = path.resolve(dir2, f);
+
+  //   fs.rename(file, dest, (err)=>{
+  //     if(err) throw err;
+  //     else console.log('Successfully moved');
+  //   });
+  // };
+
+  //move file1.htm from 'test/' to 'test/dir_1/'
+  // moveFile(`./media/live/${stream_key}/`, './uploads/');
+});
+
+nms.on('prePlay', (id, StreamPath, args) => {
+  // console.log('[NodeEvent on prePlay]', `id=${id} StreamPath=${StreamPath} args=${JSON.stringify(args)}`);
+  // let session = nms.getSession(id);
+  // session.reject();
+});
+
+nms.on('postPlay', (id, StreamPath, args) => {
+  // console.log('[NodeEvent on postPlay]', `id=${id} StreamPath=${StreamPath} args=${JSON.stringify(args)}`);
+});
+
+nms.on('donePlay', (id, StreamPath, args) => {
+  // console.log('[NodeEvent on donePlay]', `id=${id} StreamPath=${StreamPath} args=${JSON.stringify(args)}`);
+});
+
+const getStreamKeyFromStreamPath = (path) => {
+  let parts = path.split('/');
+  return parts[parts.length - 1];
+};
+
+module.exports = nms;
