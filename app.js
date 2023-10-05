@@ -29,30 +29,30 @@ app.use(cors());
 app.use(express.json());
 
 // Routings for api
-app.use(route.all('/api/*', isAuthenticatedUser))
-app.use(route.all('/api/admin/*',authorizeRoles("admin")))
-app.use(route.all('/api/artist/*',authorizeRoles("artist")))
-app.use(route.all('/api/artist-admin/*',authorizeRoles("artist", "admin")))
-app.use('/auth', authenticationRoutes);
-app.use('/public/api', tattooCategoryRoutes);
-app.use('/api', userRoute);
-app.use('/api', roleRoute);
-app.use('/api', channelRoute);
-app.use('/api', tattooCategoryRoutes);
-app.use('/api', videoRoutes);
-app.use('/api', membershipPlanRoutes);
-app.use('/api', subscriptionDetailRoutes);
-app.use('/api', commentRoutes);
-app.use('/api', replyRoutes);
-app.use('/api', followerRoutes);
-app.use('/api', likeAndDislikeRoutes);
-app.use('/api', searchHistoryRoutes);
-app.use('/api', videoHistoryRoutes);
-app.use('/api', streamRoute);
-app.use('/api', playlistRoutes);
-app.use('/api', chatMessageRoutes);
-app.use('/api', tagRoutes);
-app.use('/api', tattooCategoryFollowerRoutes);
+app.use(route.all('/prod/api/*', isAuthenticatedUser))
+app.use(route.all('/prod/api/admin/*',authorizeRoles("admin")))
+app.use(route.all('/prod/api/artist/*',authorizeRoles("artist")))
+app.use(route.all('/prod/api/artist-admin/*',authorizeRoles("artist", "admin")))
+app.use('/prod/auth', authenticationRoutes);
+app.use('/prod/public/api', tattooCategoryRoutes);
+app.use('/prod/api', userRoute);
+app.use('/prod/api', roleRoute);
+app.use('/prod/api', channelRoute);
+app.use('/prod/api', tattooCategoryRoutes);
+app.use('/prod/api', videoRoutes);
+app.use('/prod/api', membershipPlanRoutes);
+app.use('/prod/api', subscriptionDetailRoutes);
+app.use('/prod/api', commentRoutes);
+app.use('/prod/api', replyRoutes);
+app.use('/prod/api', followerRoutes);
+app.use('/prod/api', likeAndDislikeRoutes);
+app.use('/prod/api', searchHistoryRoutes);
+app.use('/prod/api', videoHistoryRoutes);
+app.use('/prod/api', streamRoute);
+app.use('/prod/api', playlistRoutes);
+app.use('/prod/api', chatMessageRoutes);
+app.use('/prod/api', tagRoutes);
+app.use('/prod/api', tattooCategoryFollowerRoutes);
 
 app.use(errorMiddleware);
 

@@ -43,7 +43,7 @@ async function startApolloServer(typeDefs, resolvers) {
   
   await apolloServer.start()
   
-  app.use('/graphql',
+  app.use('/prod/graphql',
     expressMiddleware(apolloServer, {
       context: async ({ req }) => {
         // Checking user is authenticated or not
@@ -76,7 +76,7 @@ startApolloServer(typeDefs, resolvers);
 // Server listening on ports
 const expressServer = app.listen({ port: process.env.SERVER_PORT }, ()=>{
   console.log(`Express app is working on http://localhost:${process.env.SERVER_PORT}`);
-  console.log(`GraphQl is working on http://localhost:${process.env.SERVER_PORT}/graphql`);
+  console.log(`GraphQl is working on http://localhost:${process.env.SERVER_PORT}/prod/graphql`);
   console.log(`Socket io listening on ${process.env.SERVER_PORT}`)
 });
 
