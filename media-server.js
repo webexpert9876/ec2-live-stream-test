@@ -100,7 +100,7 @@ nms.on('prePublish', async (id, StreamPath, args) => {
         if(!streamDetails.streamPreviewImage){
           setTimeout(()=>{
             generateStreamThumbnail(stream_key, liveStreamData, videoCreated);
-          }, 10000)
+          }, 25000)
         }
         // else {
 
