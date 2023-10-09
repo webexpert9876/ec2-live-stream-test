@@ -76,7 +76,7 @@ nms.on('prePublish', async (id, StreamPath, args) => {
       let liveStreamDetails = {
         title: streamDetails.title,
         description: streamDetails.description,
-        streamUrl: `http://18.231.170.3/live/${stream_key}/index.m3u8`,
+        streamUrl: `https://livetattooartists.com/live/${stream_key}/index.m3u8`,
         tags: streamDetails.tags,
         tattooCategory: streamDetails.streamCategory,
         userId: streamDetails.artistId,
