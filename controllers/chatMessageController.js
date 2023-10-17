@@ -65,3 +65,19 @@ exports.getAllMessagesByVideoId = catchAsyncErrors(async(req, res, next)=>{
         messages: messages
     })
 });
+
+exports.updatePinMessage = catchAsyncErrors(async(req, res, next)=>{
+
+    const pinnedMessage = await chatMessageModel.findByIdAndUpdate(req.params.id, {
+        isPinned: req.body.isPinned
+    }, {
+        new: true,
+        runValidators: true,
+        useFindAndModify: false,
+    });
+
+    res.status(200).json({
+        success: true,
+        pinnedMessage
+    });
+});

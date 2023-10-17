@@ -54,6 +54,8 @@ const typeDefs = `#graphql
   type ChatMessage {
     _id: ID
     userId: String
+    liveStreamId: String
+    isPinned: String
     userDetail: [User]
     message: String
     videoId: String

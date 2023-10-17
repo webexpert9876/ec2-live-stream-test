@@ -3,10 +3,12 @@ const liveStreamingModel = require('../models/liveStreamingModel');
 const videoModel = require('../models/videoModel');
 const ObjectId = require('mongoose').Types.ObjectId;
 const ErrorHandler = require('../utils/errorHandler');
+const { v4: uuidv4 } = require('uuid');
+
 var userLists = {};
 var channelViewerLists = {};
 var liveViewerCounts = {};
-const { v4: uuidv4 } = require('uuid');
+var blockedUserId = {};
 
 exports.handleRoomJoining = (socket)=>{
   // console.log('joiinin', socket.handshake.query.userId);
@@ -43,7 +45,7 @@ exports.handleVideoViewerJoining = (socket)=>{
     socket.liveStreamId = streamId;
     socket.userId = uuidv4();
     if(channelViewerLists.hasOwnProperty(roomId)){      
-      // // console.log('channelViewerLists.roomId', channelViewerLists)
+      // console.log('channelViewerLists.roomId', channelViewerLists)
       // channelViewerLists[roomId].viewer += 1;
       // console.log('channelViewerLists.roomId 22222', parseInt(channelViewerLists[roomId].viewer))
       // // let viewerCount = channelViewerLists[roomId].length;
@@ -61,6 +63,7 @@ exports.handleVideoViewerJoining = (socket)=>{
             viewers: liveViewerCounts[roomId].liveViewer
           });
         }
+        console.log('channelViewerLists.roomId', channelViewerLists)
       }
 
     } else {
@@ -70,7 +73,7 @@ exports.handleVideoViewerJoining = (socket)=>{
       channelViewerLists[roomId].push(socket.userId);
       // liveViewerCount += 1;
     }
-    // console.log(`User ${socket.id} joined room: ${roomId}`);
+    console.log(`User ${socket.id} joined room: ${roomId}`);
   });
 };
 
@@ -84,18 +87,21 @@ exports.handleStreamChat = (socket)=>{
           userLists[roomId].push(userId);
           // let viewerCount = userLists[roomId].length;
           // socket.to(roomId).emit('viewerCounts', { viewerCount });
-          const chatInfo = await chatMessageModel.create({userId, message, videoId: roomId});
-          socket.to(roomId).emit('receiveMessage', { roomId, message, sender: userName });
+          const chatInfo = await chatMessageModel.create({userId, message, videoId: roomId, liveStreamId: socket.liveStreamId});
+          console.log('chatinfo', chatInfo);
+          socket.to(roomId).emit('receiveMessage', { roomId, message, sender: userName, chatInfo });
         } else {
           
-          const chatInfo = await chatMessageModel.create({userId, message, videoId: roomId});
-          socket.to(roomId).emit('receiveMessage', { roomId, message, sender: userName });
+          const chatInfo = await chatMessageModel.create({userId, message, videoId: roomId, liveStreamId: socket.liveStreamId});
+          console.log('chatinfo', chatInfo);
+          socket.to(roomId).emit('receiveMessage', { roomId, message, sender: userName, chatInfo });
         }
       } else {
         userLists[roomId] = []
         userLists[roomId].push(userId);
-        const chatInfo = await chatMessageModel.create({userId, message, videoId: roomId});
-        socket.to(roomId).emit('receiveMessage', { roomId, message, sender: userName });
+        const chatInfo = await chatMessageModel.create({userId, message, videoId: roomId, liveStreamId: socket.liveStreamId});
+        console.log('chatinfo', chatInfo);
+        socket.to(roomId).emit('receiveMessage', { roomId, message, sender: userName, chatInfo });
       }
     }
   });
@@ -159,6 +165,8 @@ exports.handleSocketDisconnect = (socket)=>{
           // let viewerCount = channelViewerLists[roomId].length;
           // liveViewerCount = liveViewerCount - 1;
           liveViewerCounts[roomId].liveViewer = liveViewerCounts[roomId].liveViewer - 1;
+
+          console.log('disconnect  user')
           
 
           if(liveViewerCounts[roomId].liveViewer % 10 === 0 ){

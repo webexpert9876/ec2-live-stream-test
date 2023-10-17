@@ -119,6 +119,8 @@ const getAllChatMessages = async(parent, args)=>{
                 userId: 1,
                 message: 1,
                 videoId: 1,
+                liveStreamId: 1,
+                isPinned: 1,
                 userDetail: 1,
                 hours: { $hour: '$createdAt' },
                 mins: { $minute: '$createdAt' }

@@ -12,8 +12,16 @@ const chatSchema = new mongoose.Schema({
     },
     videoId:{
         type: mongoose.Types.ObjectId,
-        ref: 'users',
+        ref: 'videos',
         required: [true, 'Please enter video id']
+    },
+    liveStreamId: {
+        type: mongoose.Types.ObjectId,
+        ref: 'liveStreamings'
+    },
+    isPinned:{
+      type: Boolean,
+      default: false
     }
 },{
     timestamps: true
