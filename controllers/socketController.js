@@ -38,12 +38,13 @@ exports.handleRoomJoining = (socket)=>{
   });
 };
 
-exports.handleVideoViewerJoining = (socket)=>{
+exports.handleVideoViewerJoining = (socket, io)=>{
   socket.on('joinLiveViewerRoom', async (roomId, {streamId}) => {
     socket.join(roomId);
     socket.roomId = roomId;
     socket.liveStreamId = streamId;
     socket.userId = uuidv4();
+    console.log('roomId', roomId)
     if(channelViewerLists.hasOwnProperty(roomId)){      
       // console.log('channelViewerLists.roomId', channelViewerLists)
       // channelViewerLists[roomId].viewer += 1;
@@ -55,7 +56,7 @@ exports.handleVideoViewerJoining = (socket)=>{
         channelViewerLists[roomId].push(socket.userId);
         // let viewerCount = channelViewerLists[roomId].length;
         liveViewerCounts[roomId].liveViewer += 1;
-        socket.to(roomId).emit('viewerCounts', { viewerCount: liveViewerCounts[roomId].liveViewer });
+        io.in(roomId).emit('viewerCounts', { viewerCount: liveViewerCounts[roomId].liveViewer });
         // liveViewerCount += 1;
         // socket.to(roomId).emit('viewerCounts', { viewerCount: liveViewerCount });
         if(liveViewerCounts[roomId].liveViewer % 10 === 0 ){
@@ -71,13 +72,14 @@ exports.handleVideoViewerJoining = (socket)=>{
       channelViewerLists[roomId] = []
       liveViewerCounts[roomId] = {liveViewer: 1}
       channelViewerLists[roomId].push(socket.userId);
+      io.in(roomId).emit('viewerCounts', { viewerCount: liveViewerCounts[roomId].liveViewer });
       // liveViewerCount += 1;
     }
     console.log(`User ${socket.id} joined room: ${roomId}`);
   });
 };
 
-exports.handleStreamChat = (socket)=>{
+exports.handleStreamChat = (socket, io)=>{
   socket.on('sendMessage', async ({ roomId, message, userId, userName }) => {
     socket.originalUserId = userId;
     if(socket.originalUserId){
@@ -89,23 +91,70 @@ exports.handleStreamChat = (socket)=>{
           // socket.to(roomId).emit('viewerCounts', { viewerCount });
           const chatInfo = await chatMessageModel.create({userId, message, videoId: roomId, liveStreamId: socket.liveStreamId});
           console.log('chatinfo', chatInfo);
-          socket.to(roomId).emit('receiveMessage', { roomId, message, sender: userName, chatInfo });
+          io.in(roomId).emit('receiveMessage', { roomId, message, sender: userName, chatInfo });
         } else {
           
           const chatInfo = await chatMessageModel.create({userId, message, videoId: roomId, liveStreamId: socket.liveStreamId});
           console.log('chatinfo', chatInfo);
-          socket.to(roomId).emit('receiveMessage', { roomId, message, sender: userName, chatInfo });
+          io.in(roomId).emit('receiveMessage', { roomId, message, sender: userName, chatInfo });
         }
       } else {
         userLists[roomId] = []
         userLists[roomId].push(userId);
         const chatInfo = await chatMessageModel.create({userId, message, videoId: roomId, liveStreamId: socket.liveStreamId});
         console.log('chatinfo', chatInfo);
-        socket.to(roomId).emit('receiveMessage', { roomId, message, sender: userName, chatInfo });
+        io.in(roomId).emit('receiveMessage', { roomId, message, sender: userName, chatInfo });
       }
     }
   });
 };
+
+exports.handlePinMessage = (socket)=>{
+  socket.on('pinMessage', async (messageId, {videoId, liveStreamId, isPinned})=>{
+    let pinnedMessage;
+    let data;
+
+    console.log('messageId', messageId);
+    console.log('videoId', videoId);
+    console.log('liveStreamId', liveStreamId);
+    console.log('isPinned', isPinned);
+    if(isPinned){
+
+        data = await chatMessageModel.updateMany(
+            {
+              $and: [
+                { videoId: videoId },
+                { liveStreamId: liveStreamId },
+                { isPinned: isPinned }
+              ]
+            },
+            { $set: { isPinned: false } }
+        );
+        
+        pinnedMessage = await chatMessageModel.findByIdAndUpdate(messageId, {
+            isPinned: isPinned
+        }, {
+            new: true,
+            runValidators: true,
+            useFindAndModify: false,
+        });
+        console.log('pinnedMessage if', pinnedMessage)
+        socket.to(videoId).emit('receivePinMessage', { pinnedMessage:pinnedMessage });
+    } 
+    if(! isPinned) {
+        pinnedMessage = await chatMessageModel.findByIdAndUpdate(messageId, {
+            isPinned: isPinned
+        }, {
+            new: true,
+            runValidators: true,
+            useFindAndModify: false,
+        });
+
+        console.log('pinnedMessage', pinnedMessage)
+        socket.to(videoId).emit('receivePinMessage', { pinnedMessage:pinnedMessage });
+    }
+  })
+}
 
 exports.handleLeaveStreamChat = (socket)=>{
   socket.on('leaveRoom', (roomId, userId) => {

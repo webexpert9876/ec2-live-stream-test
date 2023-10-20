@@ -67,14 +67,47 @@ exports.getAllMessagesByVideoId = catchAsyncErrors(async(req, res, next)=>{
 });
 
 exports.updatePinMessage = catchAsyncErrors(async(req, res, next)=>{
+    
+    // const pinnedMessage = await chatMessageModel.findByIdAndUpdate(req.params.id, {
+    //     isPinned: req.body.isPinned
+    // }, {
+    //     new: true,
+    //     runValidators: true,
+    //     useFindAndModify: false,
+    // });
+    let pinnedMessage;
+    let data;
 
-    const pinnedMessage = await chatMessageModel.findByIdAndUpdate(req.params.id, {
-        isPinned: req.body.isPinned
-    }, {
-        new: true,
-        runValidators: true,
-        useFindAndModify: false,
-    });
+    if(req.body.isPinned){
+        console.log('if')
+        data = await chatMessageModel.updateMany(
+            {
+                $and: [
+                  { videoId: '64be4c9cc1e7b7e58ab24b82' },
+                  { liveStreamId: '64be5dd8d427bfdf689c7813' },
+                  { isPinned: true }
+                ]
+            },
+            { $set: { isPinned: false } }
+        );
+        
+        pinnedMessage = await chatMessageModel.findByIdAndUpdate(req.params.id, {
+            isPinned: req.body.isPinned
+        }, {
+            new: true,
+            runValidators: true,
+            useFindAndModify: false,
+        });
+    } else {
+        console.log('else');
+        pinnedMessage = await chatMessageModel.findByIdAndUpdate(req.params.id, {
+            isPinned: req.body.isPinned
+        }, {
+            new: true,
+            runValidators: true,
+            useFindAndModify: false,
+        });
+    }
 
     res.status(200).json({
         success: true,

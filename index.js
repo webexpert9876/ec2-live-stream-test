@@ -96,13 +96,13 @@ const io = require('socket.io')(expressServer, {
 io.on('connection', (socket) => {
 
   socketEventHandler.handleRoomJoining(socket);
-  socketEventHandler.handleVideoViewerJoining(socket);
-  socketEventHandler.handleStreamChat(socket);
+  socketEventHandler.handleVideoViewerJoining(socket, io);
+  socketEventHandler.handleStreamChat(socket, io);
   socketEventHandler.handleLeaveStreamChat(socket);
   socketEventHandler.handleSocketDisconnect(socket);
   socketEventHandler.handleVideoLeave(socket);
   socketEventHandler.handleLiveStreamViewerCount(socket);
-
+  socketEventHandler.handlePinMessage(socket);
 });
 
 
