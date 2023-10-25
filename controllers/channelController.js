@@ -3,7 +3,9 @@ const userModel = require('../models/userModel');
 const catchAsyncErrors = require('../middlewares/catchAsyncErrors');
 const ErrorHandler = require('../utils/errorHandler');
 const roleModel = require('../models/roleModel');
+const streamModel = require('../models/streamModel');
 var slugify = require('slugify');
+const { v4: uuidv4 } = require('uuid');
 const fs = require('fs');
 const util = require('util');
 const { uploadFile, deleteFile } = require('../middlewares/uploadFile');
@@ -47,6 +49,10 @@ exports.createChannel = catchAsyncErrors( async (req, res, next)=>{
 
     const channelData = await channelModel.create(channelCreatingData);
     // const channelData = await channelModel.create(req.body);
+
+    let streamKey = uuidv4();
+
+    const streamDetail = await streamModel.create({streamKey, artistId: channelData.userId, channelId: channelData._id});
 
     res.status(200).json({
         success: true,

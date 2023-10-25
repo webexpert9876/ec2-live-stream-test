@@ -3,16 +3,16 @@ const mongoose = require('mongoose');
 const streamSchema = new mongoose.Schema({
     title: {
         type: String,
-        required: [true, 'Please enter title'],
+        // required: [true, 'Please enter title'],
     },
     description: {
         type: String,
-        required: [true, 'Please enter password']
+        // required: [true, 'Please enter password']
     },
     streamCategory: {
         type: mongoose.Types.ObjectId,
         ref: 'tattoocategories',
-        required: [true, 'Please enter stream category']
+        // required: [true, 'Please enter stream category']
     },
     tags: {
         type: Array,
