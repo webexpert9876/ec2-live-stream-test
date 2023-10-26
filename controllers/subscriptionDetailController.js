@@ -11,7 +11,7 @@ exports.createSubscriptionDetail  = catchAsyncErrors(async(req, res, next)=>{
         {channelId: channelId}
     ]});
 
-    if(alreadySubscribed){
+    if(alreadySubscribed.length > 0){
         return next(new ErrorHandler("User already subscribed this channel", 400))
     }
 

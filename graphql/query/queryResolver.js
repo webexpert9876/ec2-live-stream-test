@@ -176,7 +176,7 @@ const getVideoByUserIdOrTattooCategoryId = async(parent, args)=>{
 
 const getRecentLiveStreamVideos = async(parent, args)=>{
 
-    const videos = await videoModel.find({$and:[{userId: args.userId}, {isStreamed: true}, {isUploaded: false}]}).sort({createdAt: -1}).limit(11);
+    const videos = await videoModel.find({$and:[{userId: args.userId}, {isPublished: true}, {videoPreviewStatus: { $ne: "private" }}, {isStreamed: true}, {isUploaded: false}]}).sort({createdAt: -1}).limit(11);
     return videos
 }
 
@@ -188,7 +188,7 @@ const getUserLastLiveStreamVideo = async(parent, args)=>{
 
 const getRecentUploadedVideos = async(parent, args)=>{
 
-    const recentVideos = await videoModel.find({$and:[{userId: args.userId}, {isUploaded: true}, {isStreamed: false}]}).sort({createdAt: -1}).limit(11);
+    const recentVideos = await videoModel.find({$and:[{userId: args.userId}, {isPublished: true}, {videoPreviewStatus: { $ne: "private" }}, {isUploaded: true}, {isStreamed: false}]}).sort({createdAt: -1}).limit(11);
     return recentVideos
 }
 
@@ -367,13 +367,40 @@ const getStreams = async (parent, args)=>{
 }
 
 const getSubscriptionDetails = async (parent, args)=>{
-    let query = {};
+    let query;
 
     if(args.id){
         query = {_id: new ObjectId(args.id)};
+    } else if(args.userId && args.channelId){
+        query = { $and: [{userId: new ObjectId(args.userId)}, {channelId: new ObjectId(args.channelId)}]};
+    } else if(args.userId){
+        query = {userId: new ObjectId(args.userId)};
+    } else if(args.channelId){
+        query = {channelId: new ObjectId(args.channelId)};
     }
     
-    const subscriptionDetails = await subscriptionDetailModel.find(query);
+    // const subscriptionDetails = await subscriptionDetailModel.find(query);
+    const subscriptionDetails = await subscriptionDetailModel.aggregate([
+        {
+            $match: query
+        },
+        {
+            $lookup: {
+                from: 'users',
+                localField: 'userId',
+                foreignField: '_id',
+                as: 'userDetail'
+            }
+        },
+        {
+            $lookup: {
+                    from: 'channels',
+                    foreignField: '_id',
+                    localField: 'channelId',
+                    as: 'channelDetails'
+                }
+        },
+    ]);
 
     return subscriptionDetails
 }

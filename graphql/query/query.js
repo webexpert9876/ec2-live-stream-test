@@ -34,7 +34,7 @@ const querySchema = `
 
     streams(artistId: String!): [Stream],
 
-    subscriptionDetails(id: ID): [SubscriptionDetail],
+    subscriptionDetails(id: ID, userId: String, channelId: String): [SubscriptionDetail],
 
     tattooCategories(id: ID, tagName: [String], urlSlug: String): [TattooCategory],
 

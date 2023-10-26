@@ -173,6 +173,8 @@ const typeDefs = `#graphql
     startDate: String
     endDate: String
     isActive: String
+    userDetail: [User]
+    channelDetails: [Channel]
     createdAt: String
     updatedAt: String
   }

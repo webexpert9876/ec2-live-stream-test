@@ -23,7 +23,6 @@ const chatMessageRoutes = require('./routes/chatMessageRoutes');
 const tagRoutes = require('./routes/tagRoute');
 const tattooCategoryFollowerRoutes = require('./routes/tattooCategoryFollowerRoutes');
 const chatBlockedUserRoutes = require('./routes/chatBlockedUserRoutes');
-const pinMessageRoutes = require('./routes/pinMessageRoutes');
 const { isAuthenticatedUser, authorizeRoles } = require('./middlewares/auth')
 const errorMiddleware = require('./middlewares/error');
 
@@ -56,7 +55,6 @@ app.use('/prod/api', chatMessageRoutes);
 app.use('/prod/api', tagRoutes);
 app.use('/prod/api', tattooCategoryFollowerRoutes);
 app.use('/prod/api', chatBlockedUserRoutes);
-app.use('/prod/api', pinMessageRoutes);
 
 app.use(errorMiddleware);
 
