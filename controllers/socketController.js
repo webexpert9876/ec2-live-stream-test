@@ -156,6 +156,15 @@ exports.handlePinMessage = (socket)=>{
   })
 }
 
+// exports.handlePinMessage = (socket)=>{
+//   socket.on('deleteLiveStreamChat', async (messageId)=>{
+    
+//     const messageDeleted = await chatMessageModel.findByIdAndDelete(messageId)
+//     console.log('messageDeleted', messageDeleted);
+//     // socket.to(socket.roomId).emit('receiveDeletedMessage', { pinnedMessage:pinnedMessage });
+//   })
+// }
+
 exports.handleLeaveStreamChat = (socket)=>{
   socket.on('leaveRoom', (roomId, userId) => {
     if(userLists.hasOwnProperty(roomId)){
