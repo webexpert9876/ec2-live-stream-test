@@ -131,20 +131,20 @@ const getAllChatMessages = async(parent, args)=>{
     return chatMessage
 }
 
-const getVideoByUserIdOrTattooCategoryId = async(parent, args)=>{
+const getVideoByChannelIdOrTattooCategoryId = async(parent, args)=>{
     let query = {};
     
-    if(args.tattooCategoryId && args.userId){
+    if(args.tattooCategoryId && args.channelId){
         query = {
             $and:[
-                { userId: {$eq: new ObjectId(args.userId)} },
+                { channelId: {$eq: new ObjectId(args.channelId)} },
                 { tattooCategoryId: {$eq: new ObjectId(args.tattooCategoryId)} }
             ]
         }
     } else if(args.videoId){
         query = { _id: {$eq: new ObjectId(args.videoId)} }
-    } else if(args.userId){
-        query = { userId: {$eq: new ObjectId(args.userId)} }
+    } else if(args.channelId){
+        query = { channelId: {$eq: new ObjectId(args.channelId)} }
     } else if(args.tattooCategoryId) {
         query = { tattooCategoryId: {$eq: new ObjectId(args.tattooCategoryId)} }
     }
@@ -176,7 +176,7 @@ const getVideoByUserIdOrTattooCategoryId = async(parent, args)=>{
 
 const getRecentLiveStreamVideos = async(parent, args)=>{
 
-    const videos = await videoModel.find({$and:[{userId: args.userId}, {isPublished: true}, {videoPreviewStatus: { $ne: "private" }}, {isStreamed: true}, {isUploaded: false}]}).sort({createdAt: -1}).limit(11);
+    const videos = await videoModel.find({$and:[{channelId: args.channelId}, {isPublished: true}, {videoPreviewStatus: { $ne: "private" }}, {isStreamed: true}, {isUploaded: false}]}).sort({createdAt: -1}).limit(11);
     return videos
 }
 
@@ -188,7 +188,7 @@ const getUserLastLiveStreamVideo = async(parent, args)=>{
 
 const getRecentUploadedVideos = async(parent, args)=>{
 
-    const recentVideos = await videoModel.find({$and:[{userId: args.userId}, {isPublished: true}, {videoPreviewStatus: { $ne: "private" }}, {isUploaded: true}, {isStreamed: false}]}).sort({createdAt: -1}).limit(11);
+    const recentVideos = await videoModel.find({$and:[{channelId: args.channelId}, {isPublished: true}, {videoPreviewStatus: { $ne: "private" }}, {isUploaded: true}, {isStreamed: false}]}).sort({createdAt: -1}).limit(11);
     return recentVideos
 }
 
@@ -741,7 +741,7 @@ const Query = {
     users: getAllUsers,
     channels: getAllChannels,
     chatMessages: getAllChatMessages,
-    videos: getVideoByUserIdOrTattooCategoryId,
+    videos: getVideoByChannelIdOrTattooCategoryId,
     recentLiveStreamVideos: getRecentLiveStreamVideos,
     recentUploadedVideos: getRecentUploadedVideos,
     getLastLiveStreamVideo: getUserLastLiveStreamVideo,

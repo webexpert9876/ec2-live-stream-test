@@ -8,13 +8,13 @@ const querySchema = `
 
     chatMessages(videoId: String!, limit: Int, skip: Int): [ChatMessage],
 
-    videos(videoId: String, userId: String, tattooCategoryId: String, tags: String): [Video],
+    videos(videoId: String, channelId: String, tattooCategoryId: String, tags: String): [Video],
 
-    recentLiveStreamVideos(userId: String!): [Video],
+    recentLiveStreamVideos(channelId: String!): [Video],
     
     getLastLiveStreamVideo(userId: String!): [Video],
 
-    recentUploadedVideos(userId: String!): [Video],
+    recentUploadedVideos(channelId: String!): [Video],
 
     comments(id: ID, videoId: String): [Comments],
 

@@ -25,7 +25,6 @@ const videoSchema = new mongoose.Schema({
     tattooCategoryId: {
         type: mongoose.Types.ObjectId,
         ref: 'tattooCategories',
-        required: [true, "Please enter tattoo category id"]
     },
     tags: {
         type: Array

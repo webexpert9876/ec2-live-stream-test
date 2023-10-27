@@ -52,7 +52,7 @@ exports.createChannel = catchAsyncErrors( async (req, res, next)=>{
 
     let streamKey = uuidv4();
 
-    const streamDetail = await streamModel.create({streamKey, artistId: channelData.userId, channelId: channelData._id});
+    const streamDetail = await streamModel.create({title: req.body.channelName, description: req.body.channelName, streamKey, artistId: channelData.userId, channelId: channelData._id});
 
     res.status(200).json({
         success: true,
