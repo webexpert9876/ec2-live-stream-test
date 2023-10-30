@@ -18,7 +18,7 @@ const querySchema = `
 
     comments(id: ID, videoId: String): [Comments],
 
-    followers(id: ID, channelId: String): [Followers],
+    followers(id: ID, channelId: String, userId: String): [Followers],
 
     likesAndDislikes(id: ID, videoId: String): [LikeAndDislike],
 

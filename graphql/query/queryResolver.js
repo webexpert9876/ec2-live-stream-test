@@ -211,6 +211,8 @@ const getFollowers = async(parent, args)=>{
         query = {channelId: new ObjectId(args.channelId)};
     } else if(args.id){
         query = {_id: new ObjectId(args.id)};
+    } else if(args.userId){
+        query = {userId: new ObjectId(args.userId)};
     }
     
     // const followers = await followerModel.find(query);

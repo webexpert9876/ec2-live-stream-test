@@ -21,6 +21,10 @@ const channelSchema = new mongoose.Schema({
         type: Number,
         default: 0
     },
+    followers:{
+        type: Number,
+        default: 0
+    },
     userId:{
         type: mongoose.Types.ObjectId,
         ref: 'users',
