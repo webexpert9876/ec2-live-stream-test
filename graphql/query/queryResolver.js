@@ -425,23 +425,22 @@ const getTattooCategories = async (parent, args)=>{
 
 const getVideoHistories = async (parent, args)=>{
 
-    const skip = args.skip? args.skip : 0;
-    const limit = args.limit? args.limit : 10;
+    const skip = args.skip != 0? args.skip : 0;
+    const limit = args.limit != 10? args.limit : 10;
 
-    let pagination=[{ $match: { userId: {$eq: new ObjectId(args.userId)} }}];
+    let pagination=[{ $match: { userId: {$eq: new ObjectId(args.userId)} }}, {$sort: { createdAt: -1 }},];
     
     if(skip && limit){
-        pagination.push({ $skip: skip });
+        pagination.push({ $skip: skip },);
         pagination.push({ $limit: limit });
     } else if(skip){
-        pagination.push({ $skip: skip });
+        pagination.push({ $skip: skip },);
     } else if(limit){
         pagination.push({ $limit: limit });
     }
 
     const allVideoHistory = await videoHistoryModel.aggregate([
         ...pagination,
-        { $sort: { createdAt: -1 } },
         {
             $lookup:{
                 from: 'videos',
@@ -450,6 +449,28 @@ const getVideoHistories = async (parent, args)=>{
                 as: 'videoDetails'
             }
         },
+        {
+            $unwind: '$videoDetails'
+        },
+        {
+            $lookup: {
+                from: 'channels',
+                localField: 'videoDetails.channelId',
+                foreignField: '_id',
+                as: 'videoDetails.channelDetails'
+            }
+        },
+        {
+            $group: {
+                _id: '$_id',
+                userId: { $first: '$userId' },
+                videoId: { $first: '$videoId' },
+                createdAt: { $first: '$createdAt' },
+                updatedAt: { $first: '$updatedAt' },
+                videoDetails: { $push: '$videoDetails' }
+            }
+        },
+        { $sort: { createdAt: -1 } },
         // {
         //     $project:{
         //         _id: 1,
@@ -463,8 +484,16 @@ const getVideoHistories = async (parent, args)=>{
         //     }
         // }
     ]);
-
+    // console.log(allVideoHistory)
     return allVideoHistory
+}
+
+const getVideoHistoriesCount = async (parent, args)=>{
+    let totalCountVideoHistory = [{
+        videoHistoryCount: 0
+    }];
+    totalCountVideoHistory[0].videoHistoryCount = await videoHistoryModel.countDocuments({userId: args.userId});
+    return totalCountVideoHistory
 }
 
 // Only return Total followers of single tattoo category.
@@ -759,6 +788,7 @@ const Query = {
     subscriptionDetails: getSubscriptionDetails,
     tattooCategories: getTattooCategories,
     videoHistories: getVideoHistories,
+    countVideoHistories: getVideoHistoriesCount,
     countTattooCategoryFollower: countFollowerByTattooCategoryId,
     isTattooCategoryFollowing: isTattooCategoryFollowingByUser,
     liveStreamings: getLiveStreamings,

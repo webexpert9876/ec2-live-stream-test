@@ -39,6 +39,8 @@ const querySchema = `
     tattooCategories(id: ID, tagName: [String], urlSlug: String): [TattooCategory],
 
     videoHistories(userId: String!, limit: Int, skip: Int): [VideoHistory],
+    
+    countVideoHistories(userId: String!): [VideoHistory],
 
     countTattooCategoryFollower(tattooCategoryId: String!): [TattooCategoryFollowers],
 

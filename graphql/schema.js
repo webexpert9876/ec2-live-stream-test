@@ -203,6 +203,7 @@ const typeDefs = `#graphql
     _id: ID
     userId: String
     videoId: String
+    videoHistoryCount: Int
     videoDetails: [Video]
     createdAt: String
     updatedAt: String
