@@ -50,9 +50,9 @@ exports.createChannel = catchAsyncErrors( async (req, res, next)=>{
     const channelData = await channelModel.create(channelCreatingData);
     // const channelData = await channelModel.create(req.body);
 
-    let streamKey = uuidv4();
+    // let streamKey = uuidv4();
 
-    const streamDetail = await streamModel.create({title: req.body.channelName, description: req.body.channelName, streamKey, artistId: channelData.userId, channelId: channelData._id});
+    // const streamDetail = await streamModel.create({title: req.body.channelName, description: req.body.channelName, streamKey, artistId: channelData.userId, channelId: channelData._id});
 
     res.status(200).json({
         success: true,
@@ -343,6 +343,11 @@ exports.updateChannelByAdmin = catchAsyncErrors( async (req, res, next)=>{
 
             return next(new ErrorHandler("Channel is not approved", 400))
         }
+
+        let streamKey = uuidv4();
+
+        const streamDetail = await streamModel.create({title: channelFound.channelName, description: channelFound.channelName, streamKey, artistId: channelFound.userId, channelId: channelFound._id});
+
     }
     
     res.status(200).json({

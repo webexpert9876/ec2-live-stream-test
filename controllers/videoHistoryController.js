@@ -10,24 +10,41 @@ exports.createVideoHistory = catchAsyncErrors(async(req, res, next)=>{
     // console.log(videoHistoryFound);
     
     // if (videoHistoryFound) {
-        //     console.log('in');
-        //     // return next(new ErrorHandler(`Video History does not exist with History Id:`, 404));
-        //     let videoDeleteInfo = await videoHistoryModel.findByIdAndDelete(videoHistoryFound._id);
-        //     console.log('in', videoDeleteInfo);
-        // }
-        // const today = new Date();
-        // const videoHistoryFound = await videoHistoryModel.find({$and: [{userId: req.body.userId}, {videoId: req.body.videoId}, {created_at: {
-        //     $gte: new Date(today.getFullYear(), today.getMonth(), today.getDate()), // Start of the day
-        //     $lt: new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1), // End of the day
-        // }}]});
-        // console.log(videoHistoryFound);
+    //     console.log('in');
+    //     // return next(new ErrorHandler(`Video History does not exist with History Id:`, 404));
+    //     let videoDeleteInfo = await videoHistoryModel.findByIdAndDelete(videoHistoryFound._id);
+    //     console.log('in', videoDeleteInfo);
+    // }
 
-    const videoHistory = await videoHistoryModel.create(req.body);
- 
-    res.status(200).json({
-        success: true,
-        videoHistory
+    const today = new Date();
+    
+    const videoHistoryFound = await videoHistoryModel.find({
+        $and: [
+            {userId: req.body.userId},
+            {videoId: req.body.videoId},
+            {createdAt:
+                {
+                    $gte: new Date(today.getFullYear(), today.getMonth(), today.getDate()),
+                    $lt: new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1)
+                }
+            }
+        ]
     });
+    
+    if(videoHistoryFound.length > 0) {
+        res.status(200).json({
+            success: true
+        });
+    } else {
+
+        const videoHistory = await videoHistoryModel.create(req.body);
+     
+        res.status(200).json({
+            success: true,
+            videoHistory
+        });
+    }
+
 });
 
 // delete search history by id
