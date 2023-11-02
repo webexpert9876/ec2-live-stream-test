@@ -9,6 +9,8 @@ const path = require('path');
 
 const { uploadFile, getFileStream, deleteFile, deleteVideoFile, deleteMultipleVideos } = require('../middlewares/uploadFile');
 const tattooCategoryModel = require('../models/tattooCategoryModel');
+const videoHistoryModel = require('../models/videoHistoryModel');
+const chatMessageModel = require('../models/chatMessageModel');
 
 
 // Upload Video with video information
@@ -296,7 +298,21 @@ exports.deleteVideo = catchAsyncErrors( async (req, res, next)=>{
         }
     }
 
-    await videoModel.findByIdAndDelete(req.params.id);
+    const allVideoHistory = await videoHistoryModel.find({videoId: video._id});
+    console.log('allVideoHistory', allVideoHistory.length)
+    
+    const allChatHistory = await chatMessageModel.find({videoId: video._id});
+    console.log('allChatHistory', allChatHistory.length)
+
+    if(allVideoHistory.length > 0){
+        const history = await videoHistoryModel.deleteMany({videoId: video._id});
+    }
+    
+    if(allChatHistory.length > 0){
+        const chats = await chatMessageModel.deleteMany({videoId: video._id});
+    }
+
+    const videoDeleteInfo = await videoModel.findByIdAndDelete(req.params.id);
 
     res.status(200).json({
         success: true,

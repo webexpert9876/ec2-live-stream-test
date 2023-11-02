@@ -25,7 +25,8 @@ exports.getAllUserByRole = catchAsyncErrors( async (req, res, next)=>{
 // get single user
 exports.getSingleUser = catchAsyncErrors( async (req, res, next)=>{
     
-    const user = await userModel.findById(req.params.id,{password: 0, blocked: 0, role: 0, isActive: 0, createdAt: 0, updatedAt: 0});
+    // const user = await userModel.findById(req.params.id,{password: 0, blocked: 0, role: 0, isActive: 0, createdAt: 0, updatedAt: 0});
+    const user = await userModel.findById(req.params.id,{password: 0});
 
     if(!user){
         return next(new ErrorHandler("User not found", 404));
