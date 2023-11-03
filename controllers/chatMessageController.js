@@ -79,7 +79,6 @@ exports.updatePinMessage = catchAsyncErrors(async(req, res, next)=>{
     let data;
 
     if(req.body.isPinned){
-        console.log('if')
         data = await chatMessageModel.updateMany(
             {
                 $and: [
@@ -99,7 +98,6 @@ exports.updatePinMessage = catchAsyncErrors(async(req, res, next)=>{
             useFindAndModify: false,
         });
     } else {
-        console.log('else');
         pinnedMessage = await chatMessageModel.findByIdAndUpdate(req.params.id, {
             isPinned: req.body.isPinned
         }, {

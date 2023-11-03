@@ -299,10 +299,8 @@ exports.deleteVideo = catchAsyncErrors( async (req, res, next)=>{
     }
 
     const allVideoHistory = await videoHistoryModel.find({videoId: video._id});
-    console.log('allVideoHistory', allVideoHistory.length)
     
     const allChatHistory = await chatMessageModel.find({videoId: video._id});
-    console.log('allChatHistory', allChatHistory.length)
 
     if(allVideoHistory.length > 0){
         const history = await videoHistoryModel.deleteMany({videoId: video._id});
