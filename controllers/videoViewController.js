@@ -73,11 +73,14 @@ exports.createVideoView = catchAsyncErrors( async (req, res)=>{
 
             if(!ipFound){
 
-                viewData = await videoViewModel.create(viewCreateData);
-                
-                if(viewData){
-                    videoInfo.views = videoInfo.views + 1;
-                    videoInfo.save({ validateBeforeSave: false });
+                if(videoInfo.videoPreviewStatus != 'subscriber'){
+
+                    viewData = await videoViewModel.create(viewCreateData);
+                    
+                    if(viewData){
+                        videoInfo.views = videoInfo.views + 1;
+                        videoInfo.save({ validateBeforeSave: false });
+                    }
                 }
             }
         }
