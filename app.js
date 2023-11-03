@@ -26,9 +26,11 @@ const chatBlockedUserRoutes = require('./routes/chatBlockedUserRoutes');
 const videoViewRoutes = require('./routes/videoViewRoutes');
 const { isAuthenticatedUser, authorizeRoles } = require('./middlewares/auth')
 const errorMiddleware = require('./middlewares/error');
+const requestIp = require('request-ip');
 
 app.use(cors());
 app.use(express.json());
+app.use(requestIp.mw());
 
 // Routings for api
 app.use(route.all('/prod/api/*', isAuthenticatedUser))
