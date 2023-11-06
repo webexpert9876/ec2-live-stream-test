@@ -11,6 +11,7 @@ exports.createVideoView = catchAsyncErrors( async (req, res)=>{
     let ipFound;
     let userId;
     let viewData;
+    let viewDataUpdate;
     
     const videoInfo = await videoModel.findById({_id: req.body.videoId});
     
@@ -42,11 +43,13 @@ exports.createVideoView = catchAsyncErrors( async (req, res)=>{
                 ]});
 
                 if(ipFound){
-
                     if(userId != ipFound.userId){
-                        viewData = await videoViewModel.create(viewCreateData);
+                        !ipFound.userId ? viewDataUpdate = await videoViewModel.findByIdAndUpdate(ipFound._id, {
+                            userId: userId
+                        }) : viewData = await videoViewModel.create(viewCreateData);
+                        
                     } else {
-                        viewData = await videoViewModel.findByIdAndUpdate(ipFound._id, {
+                        viewDataUpdate = await videoViewModel.findByIdAndUpdate(ipFound._id, {
                             userId: userId
                         });
                     }
