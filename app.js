@@ -24,6 +24,7 @@ const tagRoutes = require('./routes/tagRoute');
 const tattooCategoryFollowerRoutes = require('./routes/tattooCategoryFollowerRoutes');
 const chatBlockedUserRoutes = require('./routes/chatBlockedUserRoutes');
 const videoViewRoutes = require('./routes/videoViewRoutes');
+const notificationRoutes = require('./routes/notificationRoutes');
 const { isAuthenticatedUser, authorizeRoles } = require('./middlewares/auth')
 const errorMiddleware = require('./middlewares/error');
 const requestIp = require('request-ip');
@@ -58,6 +59,7 @@ app.use('/prod/api', chatMessageRoutes);
 app.use('/prod/api', tagRoutes);
 app.use('/prod/api', tattooCategoryFollowerRoutes);
 app.use('/prod/api', chatBlockedUserRoutes);
+app.use('/prod/api', notificationRoutes);
 app.use('/prod/public/api', videoViewRoutes);
 
 app.use(errorMiddleware);
