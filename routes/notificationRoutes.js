@@ -1,20 +1,14 @@
 const express = require('express');
 const router = express.Router();
-const { createNotification } = require('../controllers/notificationController');
+const { createNotification, updateNotification, deleteNotification } = require('../controllers/notificationController');
 
 // create notification
 router.route('/create/notification').post(createNotification);
 
-// get all roles 
-// router.route('/all/roles').get(getAllRole);
+// update notification
+router.route('/update/notification/:id').put(updateNotification);
 
-// // get single role
-// router.route('/single/role/:id').get(getSingleRole);
-
-// // update role
-// router.route('/update/role').put(updateRole);
-
-// // delete role
-// router.route('/delete/role/:id').delete(deleteRole);
+// delete notification
+router.route('/delete/notification/:id').delete(deleteNotification);
 
 module.exports = router;

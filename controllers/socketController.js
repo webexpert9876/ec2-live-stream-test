@@ -4,11 +4,25 @@ const videoModel = require('../models/videoModel');
 const ObjectId = require('mongoose').Types.ObjectId;
 const ErrorHandler = require('../utils/errorHandler');
 const { v4: uuidv4 } = require('uuid');
+const notificationModel = require('../models/notificationModel');
+const subscriptionDetailModel = require('../models/subscriptionDetailModel');
 
 var userLists = {};
 var channelViewerLists = {};
 var liveViewerCounts = {};
 var blockedUserId = {};
+
+// In your shared module (socketStore.js)
+let io = null;
+
+exports.setIoObject = (ioObject) => {
+  io = ioObject;
+}
+
+exports.getIoObject = ()=>{
+  // console.log('ioio------------------------------------------------------------------------------------------------------------------------------------------------', io);
+    return io;
+}
 
 exports.handleRoomJoining = (socket)=>{
   // console.log('joiinin', socket.handshake.query.userId);
@@ -318,3 +332,18 @@ exports.handleVideoViewCount = (socket)=>{
 // socket.join("live-chat",()=>{
 //     console.log("hello")
 // });
+
+exports.handleConnectUserForNotification = (socket)=>{
+  socket.on('connectUserWithNotification', async (userId) => {
+    
+    const subscriptionDetail = await subscriptionDetailModel.find({
+      userId: userId
+    });
+
+    if(subscriptionDetail.length > 0){
+      subscriptionDetail.forEach((detail)=>{
+        socket.join(`${detail.channelId}`);
+      });
+    }
+  });
+}

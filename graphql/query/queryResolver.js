@@ -17,6 +17,7 @@ const videoHistoryModel = require('../../models/videoHistoryModel');
 const tattooCategoryFollowerModel = require('../../models/tattooCategoryFollowerModel');
 const liveStreamingModel = require('../../models/liveStreamingModel');
 const tagModel = require('../../models/tagModel');
+const notificationModel = require('../../models/notificationModel');
 const ObjectId = require('mongoose').Types.ObjectId;
 
 // return all user with role details based on ( role or user id and if role or user id is not provided it return all users )
@@ -767,6 +768,18 @@ const getChannelForSearch = async (parent, args)=>{
     return searchBar
 }
 
+const getNotificationDetails = async (parent, args)=>{
+    let query;
+
+    if(args.id){
+        query = {_id: {$in: args.id}};
+    } else if(args.receiverId){
+        query = {receiverUserIds: args.receiverId};
+    }
+    const notification = await notificationModel.find(query);
+    
+    return notification
+}
 
 const Query = {
     users: getAllUsers,
@@ -799,7 +812,8 @@ const Query = {
     tagForStream: getTags,
     videoByTag: getVideoByTag,
     videoByTagCount: getVideoByTagCount,
-    searchBar: getChannelForSearch
+    searchBar: getChannelForSearch,
+    notification: getNotificationDetails
 }
 
 module.exports = Query;

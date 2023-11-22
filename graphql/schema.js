@@ -277,6 +277,18 @@ const typeDefs = `#graphql
     channel: [Channel]
     videos: [Video]
   }
+
+  type Notification {
+    _id: ID
+    senderUserId: String
+    userDetails: [User]
+    message: String
+    receiverUserIds: [String]
+    isRead: Boolean
+    notificationType: String
+    createdAt: String
+    updatedAt: String
+  }
   
   ${query}
   ${mutation}

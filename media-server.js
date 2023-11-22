@@ -11,10 +11,14 @@ const ErrorHandler = require('./utils/errorHandler');
 const { S3, PutObjectCommand } = require("@aws-sdk/client-s3");
 const { dashLogger } = require("./log");
 const { generateStreamThumbnail } = require('./utils/generateThumbnail');
+const socketEventHandler = require('./controllers/socketController');
+const subscriptionDetailModel = require('./models/subscriptionDetailModel');
+const userModel = require('./models/userModel');
+const channelModel = require('./models/channelModel');
+const notificationModel = require('./models/notificationModel');
 
 var nms = new NodeMediaServer(config);
 // var uniqueVideoKey = uuidv4();
-
 
 nms.on('preConnect', (id, args) => {
   // console.log('[NodeEvent on preConnect]', `id=${id} args=${JSON.stringify(args)}`);
@@ -42,6 +46,8 @@ nms.on('prePublish', async (id, StreamPath, args) => {
     var videoCreated;
     
     if(streamDetails  != null){
+  
+      let io = socketEventHandler.getIoObject();
     //   const videoQualityUrl = [{
     //     quality: `360`,
     //     url: `${uniqueVideoKey}_640.mp4`
@@ -112,32 +118,24 @@ nms.on('prePublish', async (id, StreamPath, args) => {
           
         // }
 
-        // testing code start
-        // const liveStreamDetail = await liveStreamingModel.findOne({streamKey: stream_key});
-        // console.log('liveStreamDetail', liveStreamDetail)
-        
-        // const videoDetails = await videoModel.findById(liveStreamDetail.videoId);
-        // console.log('videoDetails', videoDetails)
-    
-        // if(liveStreamDetail.videoPoster){
-        //   videoDetails.videoPreviewImage = liveStreamDetail.videoPoster
-        //   await videoDetails.save({validateBeforeSave: false});
-        // } else {
-        //   setTimeout(()=>{
-        //     generateStreamThumbnail(stream_key, liveStreamDetail, videoDetails);
-        //   }, 10000)
-        // }
-    
-        // if(!liveStreamDetail.videoPoster && !videoDetails.videoPreviewImage){
-        //   // if(stream_key == '127b8dc3-637a-49c2-8f13-58af4cb565c2'){
-        //   // }
-        //   // setTimeout(()=>{
-        //   //   generateStreamThumbnail(stream_key);
-        //   // }, 10000)
-        // } else {
-        //   console.log('else' )
-        // }
-        // testing code end
+      }
+      const channelDetails = await channelModel.findById(streamDetails.channelId);
+
+      const channelSubscriberDetail = await subscriptionDetailModel.find({channelId: streamDetails.channelId});
+      
+      const subscribeUserDetail = channelSubscriberDetail.map(detail => detail.userId);
+
+      let notificationDetails = {
+        senderUserId: streamDetails.artistId,
+        message: `${channelDetails.channelName} is live streaming.`,
+        receiverUserIds: subscribeUserDetail,
+        notificationType: 'live',
+      }
+      
+      const notificationData = await notificationModel.create(notificationDetails);
+
+      if(notificationData){
+        io.in(`${streamDetails.channelId}`).emit('receiveLiveNotification', notificationData);
       }
 
     }

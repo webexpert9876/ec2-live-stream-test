@@ -63,6 +63,8 @@ const querySchema = `
     videoByTagCount(tags: String): [VideoByTagCountSchema]
 
     searchBar(searchString: String): [SearchResultSchema]
+    
+    notification(id: ID, receiverId: String, notificationType: String): [Notification]
   }
 `;
 

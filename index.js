@@ -94,7 +94,7 @@ const io = require('socket.io')(expressServer, {
 
 // Creating socket connection
 io.on('connection', (socket) => {
-
+  socketEventHandler.setIoObject(io);
   socketEventHandler.handleRoomJoining(socket);
   socketEventHandler.handleVideoViewerJoining(socket, io);
   socketEventHandler.handleStreamChat(socket, io);
@@ -103,6 +103,7 @@ io.on('connection', (socket) => {
   socketEventHandler.handleVideoLeave(socket);
   socketEventHandler.handleLiveStreamViewerCount(socket);
   socketEventHandler.handlePinMessage(socket);
+  socketEventHandler.handleConnectUserForNotification(socket, io);
 });
 
 
