@@ -132,6 +132,14 @@ nms.on('prePublish', async (id, StreamPath, args) => {
         notificationType: 'live',
       }
       
+      const notification = await notificationModel.findOne({$and:[{senderUserId: streamDetails.artistId}, {notificationType: "live"}]});
+      console.log('follow notification check', notification)
+
+      if(notification){
+        const deleteNotification = await notificationModel.findByIdAndDelete(notification._id);
+        console.log('unfollow deleteNotification available', deleteNotification)
+      }
+
       const notificationData = await notificationModel.create(notificationDetails);
 
       if(notificationData){

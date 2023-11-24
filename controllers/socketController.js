@@ -11,8 +11,8 @@ var userLists = {};
 var channelViewerLists = {};
 var liveViewerCounts = {};
 var blockedUserId = {};
+var onlineUsersList = {}
 
-// In your shared module (socketStore.js)
 let io = null;
 
 exports.setIoObject = (ioObject) => {
@@ -20,7 +20,6 @@ exports.setIoObject = (ioObject) => {
 }
 
 exports.getIoObject = ()=>{
-  // console.log('ioio------------------------------------------------------------------------------------------------------------------------------------------------', io);
     return io;
 }
 
@@ -58,7 +57,6 @@ exports.handleVideoViewerJoining = (socket, io)=>{
     socket.roomId = roomId;
     socket.liveStreamId = streamId;
     socket.userId = uuidv4();
-    console.log('roomId', roomId)
     if(channelViewerLists.hasOwnProperty(roomId)){      
       // console.log('channelViewerLists.roomId', channelViewerLists)
       // channelViewerLists[roomId].viewer += 1;
@@ -78,7 +76,6 @@ exports.handleVideoViewerJoining = (socket, io)=>{
             viewers: liveViewerCounts[roomId].liveViewer
           });
         }
-        console.log('channelViewerLists.roomId', channelViewerLists)
       }
 
     } else {
@@ -229,6 +226,7 @@ exports.handleSocketDisconnect = (socket)=>{
     // }
 
     // console.log(' before channelViewerLists', channelViewerLists);
+
     if(channelViewerLists.hasOwnProperty(roomId)){
       if(channelViewerLists[roomId].includes(userId)){
         let indexToRemove = channelViewerLists[roomId].indexOf(userId)
@@ -237,9 +235,6 @@ exports.handleSocketDisconnect = (socket)=>{
           // let viewerCount = channelViewerLists[roomId].length;
           // liveViewerCount = liveViewerCount - 1;
           liveViewerCounts[roomId].liveViewer = liveViewerCounts[roomId].liveViewer - 1;
-
-          console.log('disconnect  user')
-          
 
           if(liveViewerCounts[roomId].liveViewer % 10 === 0 ){
             await liveStreamingModel.findByIdAndUpdate(streamId, {
@@ -263,7 +258,6 @@ exports.handleSocketDisconnect = (socket)=>{
     if(userLists.hasOwnProperty(roomId)){
 
       if(userLists[roomId].includes(socket.originalUserId)){
-
         let indexToRemove = userLists[roomId].indexOf(socket.originalUserId)
         if (indexToRemove >= 0 && indexToRemove < userLists[roomId].length) {
           userLists[roomId].splice(indexToRemove, 1);
@@ -284,9 +278,12 @@ exports.handleSocketDisconnect = (socket)=>{
     //   socket.to(roomId).emit('viewerCounts', { viewerCount: channelViewerLists[roomId].viewer });
     // }
     // console.log('socket.userId', socket.userId);
+    const disconnectUserId = Object.keys(onlineUsersList).find((key) => onlineUsersList[key] === socket);
+    // const disconnectUserId = Object.keys(onlineUsersList).find((key) => console.log('key', key));
+    if (disconnectUserId) {
+      delete onlineUsersList[disconnectUserId];
+    }
 
-  // Remove the user from Socket.IO connection
-  // Perform any necessary cleanup or logic here
   });
 };
 
@@ -329,10 +326,7 @@ exports.handleVideoViewCount = (socket)=>{
   })
 }
 
-// socket.join("live-chat",()=>{
-//     console.log("hello")
-// });
-
+// online user join channel to get notification
 exports.handleConnectUserForNotification = (socket)=>{
   socket.on('connectUserWithNotification', async (userId) => {
     
@@ -347,3 +341,60 @@ exports.handleConnectUserForNotification = (socket)=>{
     }
   });
 }
+
+exports.handleOnlineUsers = (socket)=>{
+  socket.on('userConnected', async (userId) => {
+    onlineUsersList[userId] = socket;
+    // console.log(onlineUsersList);
+  });
+}
+
+exports.handleFollowChannel = (socket)=>{
+  socket.on('follow', async ({ followedUserId, userDetails, followingInfo }) => {
+    // console.log('onlineUsersList========================>', Object.keys(onlineUsersList).length);
+    console.log('follow', followedUserId);
+    let notificationDetails = {
+      senderUserId: userDetails.userId,
+      message: `${userDetails.firstName} ${userDetails.lastName} is following your channel.`,
+      receiverUserIds: [followedUserId],
+      notificationType: 'single',
+    }
+
+    const notification = await notificationModel.findOne({$and:[{senderUserId: userDetails.userId}, {receiverUserIds: followedUserId}, {notificationType: "single"}]});
+    console.log('follow notification check', notification)
+
+    if(notification){
+      const deleteNotification = await notificationModel.findByIdAndDelete(notification._id);
+      console.log('unfollow deleteNotification available', deleteNotification)
+    }
+
+    const notificationInfo = await notificationModel.create(notificationDetails);
+
+    // Emit notification event to the followed user
+    const followedUserSocket = onlineUsersList[followedUserId];
+    if (followedUserSocket) {
+      followedUserSocket.emit('newFollower', { userInfo: userDetails, followingInfo: followingInfo, notificationDetails: notificationInfo });
+    }
+  });
+};
+
+exports.handleUnfollowChannel = (socket)=>{
+  socket.on('unfollow', async ({ followedUserId, followingInfo }) => {
+    console.log('unfollow', followedUserId);
+
+    const notification = await notificationModel.findOne({$and:[{senderUserId: followingInfo.userId}, {receiverUserIds: followedUserId}, {notificationType: "single"}]});
+    console.log('unfollow notification', notification)
+
+    let deleteNotification;
+    if (notification) {
+      deleteNotification = await notificationModel.findByIdAndDelete(notification._id);
+      console.log('unfollow deleteNotification', deleteNotification)
+    }
+
+    // Emit notification event to the followed user
+    const followedUserSocket = onlineUsersList[followedUserId];
+    if (followedUserSocket) {
+      followedUserSocket.emit('removeFollow', { notificationDetails: deleteNotification });
+    }
+  });
+};

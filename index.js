@@ -104,6 +104,9 @@ io.on('connection', (socket) => {
   socketEventHandler.handleLiveStreamViewerCount(socket);
   socketEventHandler.handlePinMessage(socket);
   socketEventHandler.handleConnectUserForNotification(socket, io);
+  socketEventHandler.handleOnlineUsers(socket);
+  socketEventHandler.handleFollowChannel(socket);
+  socketEventHandler.handleUnfollowChannel(socket);
 });
 
 
