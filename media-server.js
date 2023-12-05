@@ -104,7 +104,7 @@ nms.on('prePublish', async (id, StreamPath, args) => {
         title: streamDetails.title,
         description: streamDetails.description,
         // streamUrl: `http://localhost:8080/master-${stream_key}.m3u8`, // new master playlist for all quality
-        streamUrl: `https://livetattooartists.com/master-${stream_key}.m3u8`, // old master playlist streaming url
+        streamUrl: `https://livetattooartists.com/prod/master-${stream_key}.m3u8`, // old master playlist streaming url
         // streamUrl: `https://livetattooartists.com/live/${stream_key}/index.m3u8`, old streaming url
         tags: streamDetails.tags,
         tattooCategory: streamDetails.streamCategory,
