@@ -12,7 +12,8 @@ const {
     getVideoByUserIdAndStreamId,
     publishVideo,
     deleteMultipleVideo,
-    testingGetVideo
+    testingGetVideo,
+    convertVideoInHls
 } = require('../controllers/videoController');
 
 const multer = require('multer')
@@ -27,7 +28,7 @@ routes.route('/admin/get/video/:id').get(getSingleVideoForAdmin);
 
 // -----------------------------Artist-----------------------------------
 // Video upload api
-routes.route('/artist/create/video').post(upload.array('files', 2), uploadVideo);
+routes.route('/artist-admin/create/video').post(upload.array('files', 2), uploadVideo);
 // Video update api
 routes.route('/artist/update/video/:id').put(upload.array('files', 2), updateVideo);
 // Get all video by tattoo category id and without category id for artist
@@ -55,5 +56,9 @@ routes.route('/artist-admin/delete/multiple/videos').delete(deleteMultipleVideo)
 
 
 routes.route('/testing/video').get(testingGetVideo);
+
+
+
+routes.route('/get/streaming/video/hls/:id').get(convertVideoInHls);
 
 module.exports = routes;

@@ -2,7 +2,7 @@ const querySchema = `
 
   type Query {
 
-    users(id: ID, role: String): [User],
+    users(id: ID, role: String, urlSlug: String): [User],
 
     channels(id: ID, urlSlug: String, userId: String): [Channel],
 

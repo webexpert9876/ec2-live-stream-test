@@ -2,6 +2,7 @@ const express = require('express');
 const app = express();
 const route = express.Router();
 const cors = require('cors');
+const path = require('path');
 
 const userRoute = require('./routes/userRoute');
 const roleRoute = require('./routes/roleRoutes');
@@ -30,6 +31,7 @@ const errorMiddleware = require('./middlewares/error');
 const requestIp = require('request-ip');
 
 app.use(cors());
+app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.json());
 app.use(requestIp.mw());
 

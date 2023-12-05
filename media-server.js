@@ -35,8 +35,7 @@ nms.on('doneConnect', (id, args) => {
 });
 
 nms.on('prePublish', async (id, StreamPath, args) => {
-  // console.log('[NodeEvent on prePublish]', `id=${id} StreamPath=${StreamPath} args=${JSON.stringify(args)}`);
-  // console.log('[NodeEvent on prePublish]', `args=${JSON.stringify(args)}`);
+  
   try {
     let stream_key = getStreamKeyFromStreamPath(StreamPath);
     var uniqueVideoKey = uuidv4();
@@ -77,12 +76,36 @@ nms.on('prePublish', async (id, StreamPath, args) => {
         videoPreviewImage: streamDetails.streamPreviewImage? streamDetails.streamPreviewImage: undefined
       }
       videoCreated = await videoModel.create(videoDetails);
-      console.log("videoDetails", videoCreated)
-  
+      // console.log("videoDetails", videoCreated)
+      
+      const qualities = [
+        { name: '1080p', bandwidth: 2000000, resolution: '1920x1080', uri: `https://livetattooartists.com/live/${stream_key}_1080/index.m3u8` },
+        { name: '720p', bandwidth: 1500000, resolution: '1280x720', uri: `https://livetattooartists.com/live/${stream_key}_720/index.m3u8` },
+        { name: '480p', bandwidth: 800000, resolution: '854x480', uri: `https://livetattooartists.com/live/${stream_key}_854/index.m3u8` },
+        { name: '360p', bandwidth: 500000, resolution: '640x360', uri: `https://livetattooartists.com/live/${stream_key}_640/index.m3u8` }
+      ];
+      // const qualities = [
+      //   { name: '1080p', bandwidth: 2000000, resolution: '1920x1080', uri: `http://localhost:8000/live/${stream_key}_1080/index.m3u8` },
+      //   { name: '720p', bandwidth: 1500000, resolution: '1280x720', uri: `http://localhost:8000/live/${stream_key}_720/index.m3u8` },
+      //   { name: '480p', bandwidth: 800000, resolution: '854x480', uri: `http://localhost:8000/live/${stream_key}_854/index.m3u8` },
+      //   { name: '360p', bandwidth: 500000, resolution: '640x360', uri: `http://localhost:8000/live/${stream_key}_640/index.m3u8` }
+      // ];
+      
+      const masterPlaylist = qualities.map(
+          (quality) =>
+            `#EXT-X-STREAM-INF:BANDWIDTH=${quality.bandwidth},RESOLUTION=${quality.resolution},NAME=${quality.name}\n${quality.uri}`
+      ).join('\n');
+      
+      // Write the master playlist to a file named master.m3u8
+      fs.writeFileSync(`public/master-${stream_key}.m3u8`, `#EXTM3U\n${masterPlaylist}`);
+      // console.log(masterPlaylist);
+
       let liveStreamDetails = {
         title: streamDetails.title,
         description: streamDetails.description,
-        streamUrl: `https://livetattooartists.com/live/${stream_key}/index.m3u8`,
+        // streamUrl: `http://localhost:8080/master-${stream_key}.m3u8`, // new master playlist for all quality
+        streamUrl: `https://livetattooartists.com/master-${stream_key}.m3u8`, // old master playlist streaming url
+        // streamUrl: `https://livetattooartists.com/live/${stream_key}/index.m3u8`, old streaming url
         tags: streamDetails.tags,
         tattooCategory: streamDetails.streamCategory,
         userId: streamDetails.artistId,
@@ -93,10 +116,10 @@ nms.on('prePublish', async (id, StreamPath, args) => {
       }
       
       const liveStreamData = await liveStreamingModel.create(liveStreamDetails);
-      console.log("liveStreamDetails", liveStreamData)
+      // console.log("liveStreamDetails", liveStreamData)
 
       if(!stream_key.match(/_[0-9]+$/)){
-        console.log('stream_key', stream_key)
+        // console.log('stream_key', stream_key)
         // const liveStreamDetail = await liveStreamingModel.findOne({streamKey: stream_key});
         // console.log('liveStreamDetail', liveStreamDetail)
         
@@ -106,7 +129,7 @@ nms.on('prePublish', async (id, StreamPath, args) => {
         if(!streamDetails.streamPreviewImage){
           setTimeout(()=>{
             generateStreamThumbnail(stream_key, liveStreamData, videoCreated);
-          }, 10000)
+          }, 5000)
         }
         // else {
 
@@ -133,11 +156,9 @@ nms.on('prePublish', async (id, StreamPath, args) => {
       }
       
       const notification = await notificationModel.findOne({$and:[{senderUserId: streamDetails.artistId}, {notificationType: "live"}]});
-      console.log('follow notification check', notification)
 
       if(notification){
         const deleteNotification = await notificationModel.findByIdAndDelete(notification._id);
-        console.log('unfollow deleteNotification available', deleteNotification)
       }
 
       const notificationData = await notificationModel.create(notificationDetails);
@@ -161,7 +182,7 @@ nms.on('postPublish',async (id, StreamPath, args) => {
 });
 
 nms.on('donePublish', async (id, StreamPath, args) => {
-  // console.log('[NodeEvent on donePublish]', `id=${id} StreamPath=${StreamPath} args=${JSON.stringify(args)}`);
+
   try {
     let isQualityVideo = false; 
     const unlinkFile = util.promisify(fs.unlink);
@@ -244,7 +265,6 @@ nms.on('donePublish', async (id, StreamPath, args) => {
               const command = await new PutObjectCommand(bucketParams);
               
               await s3.send(command).then(async (data)=>{
-                console.log(data);
                 if(isQualityVideo){
     
                   const updatedVideo = await videoModel.findByIdAndUpdate(videoDetails[0]._id, {$push: {videoQualityUrl: videoQualityObj}},{
@@ -259,7 +279,10 @@ nms.on('donePublish', async (id, StreamPath, args) => {
                   await unlinkFile(`${__dirname}/media/live/${stream_key}/${file}`).then(async (data)=>{
                     await fs.rmdirSync(`${__dirname}/media/live/${stream_key}`);
                   });
-    
+                  
+                  if(!stream_key.match(/_[0-9]+$/)){
+                    await unlinkFile(`${__dirname}/public/master-${stream_key}.m3u8`);
+                  }
                 }
               })
               .catch(async(error)=>{
@@ -276,6 +299,8 @@ nms.on('donePublish', async (id, StreamPath, args) => {
   } catch(error){
     dashLogger.error(`${error.message}, path : ${error.stack}`);
   }
+
+  // main code end 
 
   // moves the $file to $dir2
   // var moveFile = (file, dir2)=>{

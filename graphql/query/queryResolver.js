@@ -63,6 +63,27 @@ const getAllUsers = async (parent, args)=>{
             //     }
             // }
         ]);
+    } else if(args.urlSlug){
+        // users =  await userModel.find({urlSlug: args.urlSlug});
+        users =  await userModel.aggregate([
+            { $match: {urlSlug: args.urlSlug } },
+            {
+                $lookup: {
+                  from: 'tattoocategories',
+                  localField: 'interestStyles',
+                  foreignField: '_id',
+                  as: 'interestedStyleDetail'
+                }
+            },
+            {
+                $lookup: {
+                  from: 'channels',
+                  localField: 'channelId',
+                  foreignField: '_id',
+                  as: 'channelDetails'
+                }
+            }
+        ]);
     } else {
         users =  await userModel.find({});
     }
