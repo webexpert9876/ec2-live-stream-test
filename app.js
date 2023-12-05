@@ -31,7 +31,7 @@ const errorMiddleware = require('./middlewares/error');
 const requestIp = require('request-ip');
 
 app.use(cors());
-app.use(express.static(path.join(__dirname, 'public')));
+app.use('/prod', express.static(path.join(__dirname, 'public')));
 app.use(express.json());
 app.use(requestIp.mw());
 
