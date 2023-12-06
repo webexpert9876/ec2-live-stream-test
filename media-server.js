@@ -79,11 +79,17 @@ nms.on('prePublish', async (id, StreamPath, args) => {
       // console.log("videoDetails", videoCreated)
       
       const qualities = [
-        { name: '1080p', bandwidth: 2000000, resolution: '1920x1080', uri: `https://livetattooartists.com/live/${stream_key}_1080/index.m3u8` },
-        { name: '720p', bandwidth: 1500000, resolution: '1280x720', uri: `https://livetattooartists.com/live/${stream_key}_720/index.m3u8` },
-        { name: '480p', bandwidth: 800000, resolution: '854x480', uri: `https://livetattooartists.com/live/${stream_key}_854/index.m3u8` },
-        { name: '360p', bandwidth: 500000, resolution: '640x360', uri: `https://livetattooartists.com/live/${stream_key}_640/index.m3u8` }
+        { name: '1080p', bandwidth: 2000000, resolution: '1920x1080', uri: `http://54.94.197.15/live/${stream_key}_1080/index.m3u8` },
+        { name: '720p', bandwidth: 1500000, resolution: '1280x720', uri: `http://54.94.197.15/live/${stream_key}_720/index.m3u8` },
+        { name: '480p', bandwidth: 800000, resolution: '854x480', uri: `http://54.94.197.15/live/${stream_key}_854/index.m3u8` },
+        { name: '360p', bandwidth: 500000, resolution: '640x360', uri: `http://54.94.197.15/live/${stream_key}_640/index.m3u8` }
       ];
+      // const qualities = [
+      //   { name: '1080p', bandwidth: 2000000, resolution: '1920x1080', uri: `https://livetattooartists.com/live/${stream_key}_1080/index.m3u8` },
+      //   { name: '720p', bandwidth: 1500000, resolution: '1280x720', uri: `https://livetattooartists.com/live/${stream_key}_720/index.m3u8` },
+      //   { name: '480p', bandwidth: 800000, resolution: '854x480', uri: `https://livetattooartists.com/live/${stream_key}_854/index.m3u8` },
+      //   { name: '360p', bandwidth: 500000, resolution: '640x360', uri: `https://livetattooartists.com/live/${stream_key}_640/index.m3u8` }
+      // ];
       // const qualities = [
       //   { name: '1080p', bandwidth: 2000000, resolution: '1920x1080', uri: `http://localhost:8000/live/${stream_key}_1080/index.m3u8` },
       //   { name: '720p', bandwidth: 1500000, resolution: '1280x720', uri: `http://localhost:8000/live/${stream_key}_720/index.m3u8` },
