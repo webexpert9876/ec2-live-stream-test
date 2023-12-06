@@ -23,7 +23,8 @@ const generateStreamThumbnail = (stream_key, liveStreamDetail, videoDetails) => 
 
     const args = [
         '-y',
-        '-i', 'http://127.0.0.1:8000/live/'+stream_key+'/index.m3u8',
+        '-i', 'https://livetattooartists.com/live/'+stream_key+'/index.m3u8',
+        // '-i', 'http://127.0.0.1:8000/live/'+stream_key+'/index.m3u8',
         '-ss', '00:00:01',
         '-vframes', '1',
         '-vf', 'scale=-2:300',
