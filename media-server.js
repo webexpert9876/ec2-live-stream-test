@@ -80,13 +80,13 @@ nms.on('prePublish', async (id, StreamPath, args) => {
       
       const qualities = [
         { name: '1080p', bandwidth: 2000000, resolution: '1920x1080', uri: `https://livetattooartists.com/live/${stream_key}_1080/index.m3u8` },
-        { name: '720p', bandwidth: 1500000, resolution: '1280x720', uri: `https://livetattooartists.com/live/${stream_key}_720/index.m3u8` },
+        { name: '720p', bandwidth: 1500000, resolution: '1280x720', uri: `https://livetattooartists.com/live/${stream_key}_1280/index.m3u8` },
         { name: '480p', bandwidth: 800000, resolution: '854x480', uri: `https://livetattooartists.com/live/${stream_key}_854/index.m3u8` },
         { name: '360p', bandwidth: 500000, resolution: '640x360', uri: `https://livetattooartists.com/live/${stream_key}_640/index.m3u8` }
       ];
       // const qualities = [
       //   { name: '1080p', bandwidth: 2000000, resolution: '1920x1080', uri: `http://localhost:8000/live/${stream_key}_1080/index.m3u8` },
-      //   { name: '720p', bandwidth: 1500000, resolution: '1280x720', uri: `http://localhost:8000/live/${stream_key}_720/index.m3u8` },
+      //   { name: '720p', bandwidth: 1500000, resolution: '1280x720', uri: `http://localhost:8000/live/${stream_key}_1280/index.m3u8` },
       //   { name: '480p', bandwidth: 800000, resolution: '854x480', uri: `http://localhost:8000/live/${stream_key}_854/index.m3u8` },
       //   { name: '360p', bandwidth: 500000, resolution: '640x360', uri: `http://localhost:8000/live/${stream_key}_640/index.m3u8` }
       // ];
@@ -243,14 +243,29 @@ nms.on('donePublish', async (id, StreamPath, args) => {
               var extQuality = stream_key.substring(stream_key.indexOf('_') + 1);
     
               let newUniqueVideoName = uniqueVideoKey;
-    
+              let qualityLabel;
               if(extQuality.length <5){
-    
-                newUniqueVideoName = `${uniqueVideoKey}_${extQuality}`
+                
+                switch(extQuality) {
+
+                  case '1080':
+                      qualityLabel = 1080;
+                    break;
+                  case '1280':
+                      qualityLabel = 720;
+                    break;
+                  case '854':
+                      qualityLabel = 480;
+                    break;
+                  case '640':
+                      qualityLabel = 360;
+                    break;
+              }
+                newUniqueVideoName = `${uniqueVideoKey}_${qualityLabel}`
                 
                 isQualityVideo = true;
                 videoQualityObj ={
-                  quality: extQuality,
+                  quality: qualityLabel,
                   url: `${newUniqueVideoName}.mp4`
                 };
               }
