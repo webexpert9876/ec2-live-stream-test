@@ -155,12 +155,20 @@ const getAllChatMessages = async(parent, args)=>{
 
 const getVideoByChannelIdOrTattooCategoryId = async(parent, args)=>{
     let query = {};
-    
     if(args.tattooCategoryId && args.channelId){
         query = {
             $and:[
                 { channelId: {$eq: new ObjectId(args.channelId)} },
                 { tattooCategoryId: {$eq: new ObjectId(args.tattooCategoryId)} }
+            ]
+        }
+    } else if(args.showPrivateVideo && args.channelId){
+        query = { channelId: {$eq: new ObjectId(args.channelId)} }
+    } else if(!args.showPrivateVideo && args.channelId){
+        query = {
+            $and:[
+                { channelId: {$eq: new ObjectId(args.channelId)} },
+                { videoPreviewStatus: {$ne: 'private'} }
             ]
         }
     } else if(args.videoId){

@@ -9,7 +9,7 @@ const { Transcoder } = require('simple-hls');
 // const multer = require('multer')
 // const upload = multer({ dest: 'uploads/' })
 
-const { uploadFile, getFileStream, deleteFile, deleteVideoFile, deleteMultipleVideos, uploadFileWithQuality } = require('../middlewares/uploadFile');
+const { uploadFile, getFileStream, deleteFile, deleteVideoFile, deleteMultipleVideos, uploadFileWithQuality, deleteMultipleVideosQuality } = require('../middlewares/uploadFile');
 const tattooCategoryModel = require('../models/tattooCategoryModel');
 const videoHistoryModel = require('../models/videoHistoryModel');
 const chatMessageModel = require('../models/chatMessageModel');
@@ -46,7 +46,6 @@ exports.uploadVideo = catchAsyncErrors(async(req, res, next)=>{
                 await unlinkFile(file[i].path)
             } else if(file[i].mimetype.match(/^video/)) {
                 
-                console.log('result.videoQualities', result.videoQualities);
                 videoUrl = result.fileNameWithExtenstion;
                 videoQualityUrl = result.videoQualities;
                 await unlinkFile(file[i].path)
@@ -81,6 +80,7 @@ exports.updateVideo = catchAsyncErrors( async (req, res, next)=>{
     // let file = req.files;
     var newPreviewImage = videoDetailFound.videoPreviewImage;
     var newVideoFile = videoDetailFound.url;
+    var newVideoQuality = videoDetailFound.videoQualityUrl;
     
     if(req.files.length >0){
         let files = req.files;
@@ -136,33 +136,53 @@ exports.updateVideo = catchAsyncErrors( async (req, res, next)=>{
                 if(videoDetailFound.url){
                     deleteFileSuccess= await deleteFile(videoDetailFound.url)
                     
+                    let isDeleteQualityFile
+                    if(videoDetailFound.videoQualityUrl){
+                        
+                        let deleteObjectList = [];
+                        for(let i=0; i<videoDetailFound.videoQualityUrl.length; i++){
+
+                            deleteObjectList.push({
+                                Key: `videos/${videoDetailFound.videoQualityUrl[i].url}`
+                            });
+                        }
+                        
+                        isDeleteQualityFile = await deleteMultipleVideosQuality(deleteObjectList);
+                    }
+                    
                     if(!deleteFileSuccess.DeleteMarker){
                         return next(new ErrorHandler("Video not deleted", 400));
+                    }
+                    if(!isDeleteQualityFile.Deleted){
+                        return next(new ErrorHandler("Video quality not deleted", 400));
                     }
 
                     const unlinkFile = util.promisify(fs.unlink);
 
                     // const result = await uploadFile(files[i])
-                    const result = await uploadFileWithQuality(files[i])
+                    const result = await uploadFileWithQuality(files[i]);
 
-                    await unlinkFile(files[i].path)
-                    newVideoFile =  result.fileNameWithExtenstion
-
+                    await unlinkFile(files[i].path);
+                    newVideoFile =  result.fileNameWithExtenstion;
+                    newVideoQuality =result.videoQualities;
+                    
                 } else {
-
+                    
                     const unlinkFile = util.promisify(fs.unlink);
-
+                    
                     // const result = await uploadFile(files[i])
-                    const result = await uploadFileWithQuality(files[i])
-                    await unlinkFile(files[i].path)
-                    newVideoFile =  result.fileNameWithExtenstion
+                    const result = await uploadFileWithQuality(files[i]);
+
+                    await unlinkFile(files[i].path);
+                    newVideoFile =  result.fileNameWithExtenstion;
+                    newVideoQuality =result.videoQualities;
                 }
             }
         }
     }
 
     const videoData = await videoModel.findByIdAndUpdate(req.params.id, {
-        title, description, userId, channelId, tattooCategoryId, tags, url: newVideoFile, isPublished, isUploaded, videoPreviewImage: newPreviewImage, videoPreviewStatus
+        title, description, userId, channelId, tattooCategoryId, tags, url: newVideoFile, isPublished, isUploaded, videoPreviewImage: newPreviewImage, videoQualityUrl: newVideoQuality, videoPreviewStatus
     },{
         new: true,
         runValidators: true,
@@ -286,14 +306,24 @@ exports.deleteVideo = catchAsyncErrors( async (req, res, next)=>{
         }
     }
 
+    let isDeleteQualityFile;
     if(video.videoQualityUrl.length > 0){
-        for(let i=0; i < video.videoQualityUrl.length; i++){
-            deleteFileSuccess= await deleteVideoFile(video.videoQualityUrl[i].url);
+        // for(let i=0; i < video.videoQualityUrl.length; i++){
+        //     deleteFileSuccess= await deleteVideoFile(video.videoQualityUrl[i].url);
             
-            if(!deleteFileSuccess.DeleteMarker){
-                return next(new ErrorHandler("Video quality not deleted", 400));
-            }
+        //     if(!deleteFileSuccess.DeleteMarker){
+        //         return next(new ErrorHandler("Video quality not deleted", 400));
+        //     }
+        // }
+        let deleteObjectList = [];
+        for(let i=0; i<video.videoQualityUrl.length; i++){
+
+            deleteObjectList.push({
+                Key: `videos/${video.videoQualityUrl[i].url}`
+            });
         }
+        
+        isDeleteQualityFile = await deleteMultipleVideosQuality(deleteObjectList);
     }
 
     if(video.videoPreviewImage){
