@@ -9,6 +9,7 @@ const { v4: uuidv4 } = require('uuid');
 const fs = require('fs');
 const util = require('util');
 const { uploadFile, deleteFile } = require('../middlewares/uploadFile');
+const sendEmail = require('../utils/sendEmail');
 
 // Create channel
 exports.createChannel = catchAsyncErrors( async (req, res, next)=>{
@@ -247,7 +248,7 @@ exports.getAllChannelsForAdmin = catchAsyncErrors( async (req, res)=>{
 
 // Update channel by admin
 exports.updateChannelByAdmin = catchAsyncErrors( async (req, res, next)=>{
-    const {id, channelName, description, location, userId, subscribers, isApproved, blocked} = req.body;
+    const {id, channelName, description, location, userId, subscribers, isApproved, blocked, reason, isChannelStatusChanged, channelNewStatus, blockReason} = req.body;
 
     if(!id){
         return next(new ErrorHandler("Please Enter id", 400))
@@ -309,10 +310,7 @@ exports.updateChannelByAdmin = catchAsyncErrors( async (req, res, next)=>{
         description,
         location,
         subscribers,
-        isApproved,
-        userId,
-        urlSlug,
-        blocked
+        urlSlug
     },{
         new: true,
         runValidators: true,
@@ -324,7 +322,11 @@ exports.updateChannelByAdmin = catchAsyncErrors( async (req, res, next)=>{
     }
 
     let userData;
-    if(channelData.isApproved){
+    let channelUpdatedInfo;
+    // if(channelData.isApproved == 'approved'){
+
+    if(channelFound.isApproved != 'approved' && isChannelStatusChanged && channelNewStatus == 'approved'){
+
         const roleInfo = await roleModel.findOne({role: 'artist'});
         userData = await userModel.findByIdAndUpdate(channelData.userId, {role: roleInfo._id, channelId: channelData._id},{
             new: true,
@@ -334,7 +336,7 @@ exports.updateChannelByAdmin = catchAsyncErrors( async (req, res, next)=>{
 
         if(!userData.channelId){
             await channelModel.findByIdAndUpdate(id, {
-                isApproved: false
+                isApproved: 'pending'
             },{
                 new: true,
                 runValidators: true,
@@ -342,17 +344,181 @@ exports.updateChannelByAdmin = catchAsyncErrors( async (req, res, next)=>{
             });
 
             return next(new ErrorHandler("Channel is not approved", 400))
+        } else {
+            channelUpdatedInfo = await channelModel.findByIdAndUpdate(id, {isApproved, $unset: { reason: 1 }},{
+                new: true,
+                runValidators: true,
+                useFindAndModify: false,
+            });
+            if(channelUpdatedInfo){
+                console.log('if', channelUpdatedInfo);
+
+                const message = `
+                    <div>
+                        <h1>Congratulations! Your Channel has been Approved</h1>
+                        <p>Hello ${userData.firstName} ${userData.lastName},</p>
+                        <p>We are thrilled to inform you that your channel has been approved successfully!</p>
+                        <p>Your content is now available to the audience. Keep creating amazing content!</p>
+                        <p>Thank you for being a part of our platform.</p>
+                        <p>Best Regards,</p>
+                        <p>Live tattoo streaming</p>
+                    </div>`;
+
+                try{
+                    await sendEmail({
+                        email: userData.email,
+                        subject:`Your Channel Is Officially Approved 🎉`,
+                        message,
+                        type: 'html'
+                    });
+                
+                } catch(error){
+
+                    return next(new ErrorHandler(error.message, 500));
+                }
+            }
         }
 
         let streamKey = uuidv4();
 
         const streamDetail = await streamModel.create({title: channelFound.channelName, description: channelFound.channelName, streamKey, artistId: channelFound.userId, channelId: channelFound._id});
 
+    } else if(channelFound.isApproved != 'declined' && isChannelStatusChanged && channelNewStatus == 'declined'){
+        
+        channelUpdatedInfo = await channelModel.findByIdAndUpdate(id, {isApproved, reason},{
+            new: true,
+            runValidators: true,
+            useFindAndModify: false,
+        });
+
+        if(channelUpdatedInfo){
+
+            const roleInfo = await roleModel.findOne({role: 'user'});
+
+            userData = await userModel.findByIdAndUpdate(channelData.userId, {role: roleInfo._id,  $unset: { channelId: 1 } },{
+                new: true,
+                runValidators: true,
+                useFindAndModify: false,
+            });
+
+            const message = `
+            <div>
+                <h1>Channel Declined: Action Required</h1>
+                <p>Hello ${userData.firstName} ${userData.lastName},</p>
+                <p>We regret to inform you that your channel has been declined.</p>
+                <p>The reason for decline: <b>${reason}</b></p>
+                <p>Please review the guidelines and make necessary updates to re-submit your channel for approval.</p>
+                <p>Thank you for your understanding.</p>
+                <p>Best Regards,</p>
+                <p>Live tattoo streaming</p>
+            </div>`;
+
+                try{
+                    await sendEmail({
+                        email: userData.email,
+                        subject: `Your Channel Decline Notification`,
+                        message,
+                        type: 'html'
+                    });
+                
+                } catch(error){
+
+                    return next(new ErrorHandler(error.message, 500));
+                }
+        }
+
+    } else if(channelFound.isApproved != 'pending' && isChannelStatusChanged && channelNewStatus == 'pending'){
+
+        channelUpdatedInfo = await channelModel.findByIdAndUpdate(id, {isApproved, $unset: { reason: 1 }},{
+            new: true,
+            runValidators: true,
+            useFindAndModify: false,
+        });
+
+        if(channelUpdatedInfo){
+            const roleInfo = await roleModel.findOne({role: 'user'});
+
+            userData = await userModel.findByIdAndUpdate(channelData.userId, {role: roleInfo._id,  $unset: { channelId: 1 } },{
+                new: true,
+                runValidators: true,
+                useFindAndModify: false,
+            });
+        }
     }
+
     
+    if(`${channelFound.blocked}` != `${blocked}` && `${blocked}` == `true`){
+        channelUpdatedInfo = await channelModel.findByIdAndUpdate(id, {blocked, reason: blockReason},{
+            new: true,
+            runValidators: true,
+            useFindAndModify: false,
+        });
+
+        if(channelUpdatedInfo){
+            if(!userData){
+                userData = await userModel.findById(channelFound.userId);
+            }
+            const message = `
+            <div>
+                <h1>Channel Blocked: Action Required</h1>
+                <p>Hello ${userData.firstName} ${userData.lastName},</p>
+                <p>We regret to inform you that your channel has been blocked.</p>
+                <p>The reason for the block: <b>${blockReason}</b></p>
+                <p>Please reach out to the support team to resolve this issue.</p>
+                <p>Thank you for your cooperation.</p>
+                <p>Best Regards,</p>
+                <p>Live tattoo streaming</p>
+            </div>`;
+    
+            try{
+                await sendEmail({
+                    email: userData.email,
+                    subject:`Your Channel Block Notification`,
+                    message,
+                    type: 'html'
+                });
+            } catch(error){
+                return next(new ErrorHandler(error.message, 500));
+            }
+        }
+    } else if(`${channelFound.blocked}` != `${blocked}` && `${blocked}` == `false`){
+        channelUpdatedInfo = await channelModel.findByIdAndUpdate(id, {blocked},{
+            new: true,
+            runValidators: true,
+            useFindAndModify: false,
+        });
+
+        if(channelUpdatedInfo){
+            if(!userData){
+                userData = await userModel.findById(channelFound.userId);
+            }
+            const message = `
+            <div>
+                <h1>Channel Unblocked: Action Required</h1>
+                <p>Hello ${userData.firstName} ${userData.lastName},</p>
+                <p>We're pleased to inform you that your channel has been unblocked.</p>
+                <p>You can now continue using your channel as usual.</p>
+                <p>Thank you for your patience and understanding.</p>
+                <p>Best Regards,</p>
+                <p>Live tattoo streaming</p>
+            </div>`;
+    
+            try{
+                await sendEmail({
+                    email: userData.email,
+                    subject:`Your Channel Unblock Notification`,
+                    message,
+                    type: 'html'
+                });
+            } catch(error){
+                return next(new ErrorHandler(error.message, 500));
+            }
+        }
+    }
+
     res.status(200).json({
         success: true,
         message: 'channel updated successfully',
-        channelData: channelData
+        channelData: channelUpdatedInfo
     });
 });

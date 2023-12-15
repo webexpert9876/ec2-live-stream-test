@@ -24,8 +24,8 @@ exports.updateNotification = catchAsyncErrors( async (req, res, next)=>{
     }
 
     let updatedNotification = null;
-
-    if(notificationFound.notificationType == 'single'){
+    let notifiType = notificationFound.notificationType;
+    if(notifiType == 'single' || notifiType == 'approved' || notifiType == 'unblock' || notifiType == 'block' || notifiType == 'declined' || notifiType == 'pending'){
         updatedNotification = await notificationModel.findByIdAndUpdate(id, {isRead: true},{
             new: true,
             runValidators: true,

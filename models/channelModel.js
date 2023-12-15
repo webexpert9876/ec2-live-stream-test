@@ -35,10 +35,16 @@ const channelSchema = new mongoose.Schema({
         type: String
     },
     isApproved: {
-        type: Boolean,
-        required: [true, 'Please enter channel approved or not'],
-        default: false
+        type: String,
+        enum: ['approved', 'pending', 'declined'],
+        required: [true, 'Please enter channel approved status'],
+        default: 'pending'
     },
+    // isApproved: {
+    //     type: Boolean,
+    //     required: [true, 'Please enter channel approved or not'],
+    //     default: false
+    // },
     blocked: {
         type: Boolean,
         default: false
@@ -55,6 +61,9 @@ const channelSchema = new mongoose.Schema({
         type: String
     },
     otherPlatformUrl: {
+        type: String
+    },
+    reason: {
         type: String
     }
 },

@@ -107,6 +107,8 @@ io.on('connection', (socket) => {
   socketEventHandler.handleOnlineUsers(socket);
   socketEventHandler.handleFollowChannel(socket);
   socketEventHandler.handleUnfollowChannel(socket);
+  socketEventHandler.handleChannelApprove(socket);
+  socketEventHandler.handleChannelBlockNotification(socket);
 });
 
 

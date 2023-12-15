@@ -349,6 +349,7 @@ exports.handleOnlineUsers = (socket)=>{
   });
 }
 
+// Follow channel event  fucntion
 exports.handleFollowChannel = (socket)=>{
   socket.on('follow', async ({ followedUserId, userDetails, followingInfo }) => {
     // console.log('onlineUsersList========================>', Object.keys(onlineUsersList).length);
@@ -378,6 +379,7 @@ exports.handleFollowChannel = (socket)=>{
   });
 };
 
+// Unfollow channel event  fucntion
 exports.handleUnfollowChannel = (socket)=>{
   socket.on('unfollow', async ({ followedUserId, followingInfo }) => {
     console.log('unfollow', followedUserId);
@@ -395,6 +397,89 @@ exports.handleUnfollowChannel = (socket)=>{
     const followedUserSocket = onlineUsersList[followedUserId];
     if (followedUserSocket) {
       followedUserSocket.emit('removeFollow', { notificationDetails: deleteNotification });
+    }
+  });
+};
+
+
+exports.handleChannelApprove = (socket)=>{
+  socket.on('channelApproveNotification', async ({ receiverUserId, userDetails, status, reason }) => {
+
+    let message = '';
+    let notificationType = '';
+
+    if(status == 'approved'){
+      message = `Congratulations! Your Channel has been Approved.`;
+      notificationType = 'approved'
+
+    } else if(status == 'declined'){
+      message = `we regret to inform you that. Your channel has been declined. reason: ${reason}`;
+      notificationType = 'declined'
+    }
+
+    let notificationDetails = {
+      senderUserId: userDetails._id,
+      message: message,
+      receiverUserIds: [receiverUserId],
+      notificationType: notificationType,
+    }
+
+    // const notification = await notificationModel.findOne({$and:[{senderUserId: userDetails.userId}, {receiverUserIds: followedUserId}, {notificationType: "single"}]});
+    // console.log('follow notification check', notification);
+
+    // if(notification){
+    //   const deleteNotification = await notificationModel.findByIdAndDelete(notification._id);
+    //   console.log('unfollow deleteNotification available', deleteNotification)
+    // }
+
+    const notificationInfo = await notificationModel.create(notificationDetails);
+
+    // Emit notification event to the followed user
+    const receiverUserSocket = onlineUsersList[receiverUserId];
+
+    if (receiverUserSocket) {
+      receiverUserSocket.emit('channelApproveAndBlock', { userInfo: userDetails, notificationDetails: notificationInfo });
+    }
+  });
+};
+
+exports.handleChannelBlockNotification = (socket)=>{
+  socket.on('channelBlockNotification', async ({ receiverUserId, userDetails, status, reason }) => {
+
+    let message = '';
+    let notificationType = '';
+
+    if(status == 'true'){
+      message = `Your channel has been blocked. reason: ${reason}`;
+      notificationType = 'block'
+
+    } else if(status == 'false'){
+      message = `Your channel has been unblocked. you can start streaming again!`;
+      notificationType = 'unblock'
+    }
+
+    let notificationDetails = {
+      senderUserId: userDetails._id,
+      message: message,
+      receiverUserIds: [receiverUserId],
+      notificationType: notificationType,
+    }
+
+    // const notification = await notificationModel.findOne({$and:[{senderUserId: userDetails.userId}, {receiverUserIds: followedUserId}, {notificationType: "single"}]});
+    // console.log('follow notification check', notification);
+
+    // if(notification){
+    //   const deleteNotification = await notificationModel.findByIdAndDelete(notification._id);
+    //   console.log('unfollow deleteNotification available', deleteNotification)
+    // }
+
+    const notificationInfo = await notificationModel.create(notificationDetails);
+
+    // Emit notification event to the followed user
+    const receiverUserSocket = onlineUsersList[receiverUserId];
+    
+    if (receiverUserSocket) {
+      receiverUserSocket.emit('channelApproveAndBlock', { userInfo: userDetails, notificationDetails: notificationInfo });
     }
   });
 };

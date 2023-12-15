@@ -39,7 +39,7 @@ const notificationSchema = new mongoose.Schema({
     },
     notificationType: {
         type: String,
-        enum: ['single', 'multiple', 'live'],
+        enum: ['single', 'multiple', 'live', 'approved', 'declined', 'block', 'unblock'],
         required: true
     }
 },{

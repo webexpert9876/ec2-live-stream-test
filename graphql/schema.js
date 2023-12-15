@@ -41,6 +41,7 @@ const typeDefs = `#graphql
     location: String
     isApproved: String
     blocked: String
+    reason: String
     createdAt: String
     updatedAt: String
   }

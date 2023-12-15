@@ -11,12 +11,29 @@ const sendEmail = async (options) => {
     },
   });
 
-  const mailOptions = {
-    from: process.env.SMPT_MAIL,
-    to: options.email,
-    subject: options.subject,
-    text: options.message,
-  };
+  // const mailOptions = {
+  //   from: process.env.SMPT_MAIL,
+  //   to: options.email,
+  //   subject: options.subject,
+  //   text: options.message,
+  // };
+
+  let mailOptions
+  if(options.type == 'html'){
+    mailOptions = {
+      from: process.env.SMPT_MAIL,
+      to: options.email,
+      subject: options.subject,
+      html: options.message,
+    };
+  } else if(options.type == 'text'){
+    mailOptions = {
+      from: process.env.SMPT_MAIL,
+      to: options.email,
+      subject: options.subject,
+      text: options.message,
+    };
+  }
 
   await transporter.sendMail(mailOptions);
 };
