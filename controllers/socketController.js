@@ -56,14 +56,15 @@ exports.handleVideoViewerJoining = (socket, io)=>{
     socket.join(roomId);
     socket.roomId = roomId;
     socket.liveStreamId = streamId;
-    socket.userId = uuidv4();
+    if(!socket.userId){
+      socket.userId = uuidv4();
+    }
     if(channelViewerLists.hasOwnProperty(roomId)){      
       // console.log('channelViewerLists.roomId', channelViewerLists)
       // channelViewerLists[roomId].viewer += 1;
       // console.log('channelViewerLists.roomId 22222', parseInt(channelViewerLists[roomId].viewer))
       // // let viewerCount = channelViewerLists[roomId].length;
       // socket.to(roomId).emit('viewerCounts', { viewerCount: channelViewerLists[roomId].viewer });
-      
       if(!channelViewerLists[roomId].includes(socket.userId)){
         channelViewerLists[roomId].push(socket.userId);
         // let viewerCount = channelViewerLists[roomId].length;
