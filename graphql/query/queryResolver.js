@@ -110,7 +110,7 @@ const getAllChannels = async (parent, args)=>{
         // channel =  await channelModel.find({});
     }
 
-    channel = await channelModel.find(query);
+    channel = await channelModel.find(query).sort({createdAt: -1});
 
     return channel
 }
@@ -183,6 +183,11 @@ const getVideoByChannelIdOrTattooCategoryId = async(parent, args)=>{
     const videos = await videoModel.aggregate([
         {
             $match: query
+        },
+        {
+            $sort:{
+                createdAt: -1
+            }
         },
         {
             $lookup:{
