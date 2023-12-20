@@ -85,7 +85,32 @@ const getAllUsers = async (parent, args)=>{
             }
         ]);
     } else {
-        users =  await userModel.find({});
+        users =  await userModel.aggregate([
+            {
+              $lookup: {
+                from: 'roles', // The collection name for the Role model
+                localField: 'role',
+                foreignField: '_id',
+                as: 'roleDetails'
+              }
+            },
+            {
+                $lookup: {
+                  from: 'tattoocategories',
+                  localField: 'interestStyles',
+                  foreignField: '_id',
+                  as: 'interestedStyleDetail'
+                }
+            },
+            {
+                $lookup: {
+                  from: 'channels',
+                  localField: 'channelId',
+                  foreignField: '_id',
+                  as: 'channelDetails'
+                }
+            }
+        ]);
     }
     return users
 }
