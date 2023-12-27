@@ -145,20 +145,15 @@ exports.googleSignInValidation = async (accessToken, refreshToken, profile, cb) 
     // console.log('cb', cb)
 
     try {
-        console.log('profile', profile);
         let user = await userModel.findOne({ email: profile.emails[0].value });
         if (user) {
-            console.log('if', user);
 
             const token = user.getJWTToken();
             user.jwtToken = token;
             const userWithToken = await user.save({validateBeforeSave: false});
 
-            console.log('if userWithToken', userWithToken)
-
             cb(null, userWithToken);
         } else {
-            console.log('else', user);
           
           const words = profile.name.givenName.split(' ');
   
@@ -179,8 +174,6 @@ exports.googleSignInValidation = async (accessToken, refreshToken, profile, cb) 
             const token = newUser.getJWTToken();
             newUser.jwtToken = token;
             const userWithToken = await newUser.save({validateBeforeSave: false});
-
-            console.log('else userWithToken', userWithToken)
 
             cb(null, userWithToken);
         }
