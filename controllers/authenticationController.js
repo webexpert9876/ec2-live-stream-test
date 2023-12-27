@@ -127,8 +127,77 @@ exports.logout = catchAsyncErrors(async (req, res, next) => {
         return next(new ErrorHandler('User not logout. Please try again', 401))
     }
 
-    res.status(200).json({
-      success: true,
-      message: "Logged Out",
+    req.logout(function(err) {
+        if (err) { return next(err); }
+        // res.redirect('/');
+        res.status(200).json({
+          success: true,
+          message: "Logged Out",
+        });
     });
+
+});
+
+exports.googleSignInValidation = async (accessToken, refreshToken, profile, cb) => {
+    // console.log('accessToken', accessToken)
+    // console.log('refreshToken', refreshToken)
+    // console.log('profile', profile)
+    // console.log('cb', cb)
+
+    try {
+        console.log('profile', profile);
+        let user = await userModel.findOne({ email: profile.emails[0].value });
+        if (user) {
+            console.log('if', user);
+
+            const token = user.getJWTToken();
+            user.jwtToken = token;
+            const userWithToken = await user.save({validateBeforeSave: false});
+
+            console.log('if userWithToken', userWithToken)
+
+            cb(null, userWithToken);
+        } else {
+            console.log('else', user);
+          
+          const words = profile.name.givenName.split(' ');
+  
+          const firstName = words[0];
+          const lastName = words.slice(1).join(' ');
+  
+          let newUser = await userModel.create({
+            email: profile.emails[0].value,
+            profilePicture: profile.photos.length>0?profile.photos[0].value: '',
+            firstName: firstName,
+            lastName: lastName,
+            username: profile.name.givenName,
+            urlSlug: slugify( profile.name.givenName, {
+                lower: true,
+            })
+          });
+
+            const token = newUser.getJWTToken();
+            newUser.jwtToken = token;
+            const userWithToken = await newUser.save({validateBeforeSave: false});
+
+            console.log('else userWithToken', userWithToken)
+
+            cb(null, userWithToken);
+        }
+    } catch (err) {
+        cb(err, null);
+    }
+};
+
+exports.googleSuccessRedirectUrl = catchAsyncErrors(async (req, res, next) =>{
+    res.redirect(`${process.env.FRONTEND_URL}/google/success/?id=${req.user._id}`)
+    // res.redirect(`${process.env.FRONTEND_URL}/auth/login?id=${req.user._id}`)
+    // res.status(200).json({
+    //     user: req.user
+    // })
+});
+
+exports.googleFailureRedirectUrl = catchAsyncErrors(async (req, res, next) =>{
+    // return next(new ErrorHandler("Something went wrong", 400));
+    res.redirect(`${process.env.FRONTEND_URL}/auth/login`);
 });

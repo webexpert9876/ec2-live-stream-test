@@ -1,5 +1,7 @@
-const app = require('./app');
 const dotenv = require('dotenv');
+// Config env file
+dotenv.config({path: './config/.env'});
+const app = require('./app');
 const nms = require('./media-server');
 const databaseConnect = require('./config/databaseConfig');
 const http = require('http');
@@ -20,8 +22,6 @@ process.on("uncaughtException", (err) => {
   process.exit(1);
 });
 
-// Config env file
-dotenv.config({path: './config/.env'});
 
 // Connect to database
 databaseConnect();

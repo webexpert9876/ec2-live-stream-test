@@ -11,7 +11,7 @@ const userSchema = new mongoose.Schema({
     },
     lastName: {
         type: String,
-        required: [true, 'Please enter last name']
+        // required: [true, 'Please enter last name']
     },
     username: {
         type: String,
@@ -26,7 +26,7 @@ const userSchema = new mongoose.Schema({
     },
     password: {
         type: String,
-        required: [true, 'Please enter password']
+        // required: [true, 'Please enter password']
     },
     profilePicture:{
         type: String,
@@ -59,7 +59,7 @@ const userSchema = new mongoose.Schema({
     interestStyles: [{
         type: mongoose.Types.ObjectId,
         ref: 'tattoocategories',
-        required: [true, "Please enter at least one Interest Style"]
+        // required: [true, "Please enter at least one Interest Style"]
     }],
     channelId: {
         type: mongoose.Types.ObjectId,

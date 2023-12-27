@@ -29,17 +29,46 @@ const notificationRoutes = require('./routes/notificationRoutes');
 const { isAuthenticatedUser, authorizeRoles } = require('./middlewares/auth')
 const errorMiddleware = require('./middlewares/error');
 const requestIp = require('request-ip');
+const passport = require('passport');
+var GoogleStrategy = require('passport-google-oauth20').Strategy;
+var session = require('express-session')
+const {googleSignInValidation} = require('./controllers/authenticationController')
 
 app.use(cors());
 app.use('/prod', express.static(path.join(__dirname, 'public')));
 app.use(express.json());
 app.use(requestIp.mw());
+app.use(session({
+  secret: 'keyboard cat',
+  resave: false,
+  saveUninitialized: true,
+  cookie: { secure: false }
+}))
+
+app.use(passport.initialize());
+app.use(passport.session());
+
+passport.use(new GoogleStrategy({
+    clientID: process.env.GOOGLE_CLIENT_ID,
+    clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+    callbackURL: "http://localhost:8080/prod/auth/google/callback"
+  },
+  googleSignInValidation
+));
+
+passport.serializeUser(function (user, cb) {
+  cb(null, user);
+});
+
+passport.deserializeUser(function (obj, cb) {
+  cb(null, obj);
+});
 
 // Routings for api
 app.use(route.all('/prod/api/*', isAuthenticatedUser))
-app.use(route.all('/prod/api/admin/*',authorizeRoles("admin")))
-app.use(route.all('/prod/api/artist/*',authorizeRoles("artist")))
-app.use(route.all('/prod/api/artist-admin/*',authorizeRoles("artist", "admin")))
+app.use(route.all('/prod/api/admin/*', authorizeRoles("admin")))
+app.use(route.all('/prod/api/artist/*', authorizeRoles("artist")))
+app.use(route.all('/prod/api/artist-admin/*', authorizeRoles("artist", "admin")))
 app.use('/prod/auth', authenticationRoutes);
 app.use('/prod/public/api', tattooCategoryRoutes);
 app.use('/prod/api', userRoute);
