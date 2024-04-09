@@ -59,12 +59,16 @@ const querySchema = `
     tagForStream: [Tags]
 
     videoByTag(tags: String, limit: Int, skip: Int ): [Video]
-
+    
     videoByTagCount(tags: String): [VideoByTagCountSchema]
-
+    
     searchBar(searchString: String): [SearchResultSchema]
     
     notification(id: ID, receiverId: String, notificationType: String): [Notification]
+    
+    getChannelAnalysisByChannelId(id: ID): [ChannelAnalytics]
+    
+    videoAnalysis(id: ID, year: String ): [Video]
   }
 `;
 

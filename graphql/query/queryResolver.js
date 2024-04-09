@@ -18,6 +18,7 @@ const tattooCategoryFollowerModel = require('../../models/tattooCategoryFollower
 const liveStreamingModel = require('../../models/liveStreamingModel');
 const tagModel = require('../../models/tagModel');
 const notificationModel = require('../../models/notificationModel');
+const channelAnalysisModel = require('../../models/channelAnalysisModel');
 const ObjectId = require('mongoose').Types.ObjectId;
 
 // return all user with role details based on ( role or user id and if role or user id is not provided it return all users )
@@ -838,6 +839,71 @@ const getNotificationDetails = async (parent, args)=>{
     const notification = await notificationModel.find(query);
     
     return notification
+
+}
+
+const getChannelMonthlyAnalysisByChannelId = async (parent, args)=>{
+    try {
+        const result = await channelAnalysisModel.aggregate([
+            {
+                $match:{
+                    channelId: {$eq : new ObjectId(args.id)}
+                }
+            },
+            {$group: {
+                // _id: {$month: "$createdAt"}, 
+                _id: {$month: "$createdAt"},
+                numberofvisit: {$sum: 1} 
+            }},
+            {
+                $sort: { "_id": 1 }
+            }
+        ]);
+
+        return result
+    } catch (error) {
+        console.error(error);
+        return error
+    }
+}
+
+const getVideoMonthlyAnalysisByChannelId = async (parent, args)=>{
+    try {
+        const result = await videoModel.aggregate([
+            {
+                $match:{
+                    $and: [
+                        {channelId: {$eq : new ObjectId(args.id)}},
+                        { createdAt: { $gte: new Date(args.year, 0, 1) } },
+                        { createdAt: { $lt: new Date(args.year + 1, 0, 1) } }
+                    ]
+                }
+            },
+            {
+                $group: {
+                    _id: {$month: "$createdAt"},
+                    uploadedVideo: {
+                        $sum: {
+                            $cond: [{ $eq: ["$isUploaded", true] }, 1, 0]
+                        }
+                    },
+                    streamedVideo: {
+                        $sum: {
+                            $cond: [{ $eq: ["$isStreamed", true] }, 1, 0]
+                        }
+                    }
+                }
+            },
+            {
+                $sort: { "_id": 1 }
+            }
+        ]);
+    
+        return result;
+    } catch (error) {
+        console.error(error);
+        return error;
+    }
 }
 
 const Query = {
@@ -872,7 +938,9 @@ const Query = {
     videoByTag: getVideoByTag,
     videoByTagCount: getVideoByTagCount,
     searchBar: getChannelForSearch,
-    notification: getNotificationDetails
+    notification: getNotificationDetails,
+    getChannelAnalysisByChannelId: getChannelMonthlyAnalysisByChannelId,
+    videoAnalysis: getVideoMonthlyAnalysisByChannelId
 }
 
 module.exports = Query;

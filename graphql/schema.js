@@ -238,6 +238,8 @@ const typeDefs = `#graphql
     blocked: Boolean
     createdAt: String
     updatedAt: String
+    uploadedVideo: Int
+    streamedVideo: Int
   }
 
   type LiveStreamings {
@@ -289,6 +291,17 @@ const typeDefs = `#graphql
     notificationType: String
     createdAt: String
     updatedAt: String
+  }
+
+  type ChannelAnalytics {
+    _id: ID
+    userId: String
+    channelId: String
+    userDetails: [User]
+    channelDetails: [Channel]
+    createdAt: String
+    updatedAt: String
+    numberofvisit: String
   }
   
   ${query}
