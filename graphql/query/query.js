@@ -46,7 +46,7 @@ const querySchema = `
 
     isTattooCategoryFollowing(tattooCategoryId: String!, userId: String!): [TattooCategoryFollowers]
     
-    liveStreamings(tattooCategoryId: String, tagName: String, channelId: String): [LiveStreamings]
+    liveStreamings(tattooCategoryId: String, tagName: String, channelId: String, size: Int ): [LiveStreamings]
 
     getSliderLiveStreams: [LiveStreamings]
 

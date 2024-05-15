@@ -602,39 +602,52 @@ const isTattooCategoryFollowingByUser = async(parent, args)=>{
 
 const getLiveStreamings = async(parent, args) =>{
     let query = {}
+    let useSample = true;
 
     if(args.tattooCategoryId){
         query = {tattooCategory: new ObjectId(args.tattooCategoryId)};
+        useSample = false;
     } else if (args.tagName){
         query = {tags: {$in: [args.tagName]}};
+        useSample = false;
     } else if(args.channelId){
         query = {channelId: new ObjectId(args.channelId)};
+        useSample = false;
     }
 
-    const liveStreams = await liveStreamingModel.aggregate([
+    let pipeline = [
         {
             $match: query
-        },
-        {
-            $lookup: {
-                    from: 'channels',
-                    foreignField: '_id',
-                    localField: 'channelId',
-                    as: 'channelDetails'
-                }
-        },
-        {
-            $lookup: {
-                from: 'tattoocategories',
-                foreignField: '_id',
-                localField: 'tattooCategory',
-                as: 'tattooCategoryDetails'
-            }
-        },
-        {
-            $sort: {createdAt: -1}
         }
-    ]);
+    ]
+
+    if(useSample) {
+        pipeline.push({
+            $sample: { size: parseInt(args.size) || 2 }
+        });
+    }
+
+    pipeline.push({
+        $lookup: {
+                from: 'channels',
+                foreignField: '_id',
+                localField: 'channelId',
+                as: 'channelDetails'
+            }
+    },
+    {
+        $lookup: {
+            from: 'tattoocategories',
+            foreignField: '_id',
+            localField: 'tattooCategory',
+            as: 'tattooCategoryDetails'
+        }
+    },
+    {
+        $sort: {createdAt: -1}
+    })
+
+    const liveStreams = await liveStreamingModel.aggregate(pipeline);
 
     return liveStreams
 }
