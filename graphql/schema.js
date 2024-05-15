@@ -70,6 +70,7 @@ const typeDefs = `#graphql
     _id: ID
     text: String
     userId: String
+    userDetail: [User]
     videoId: String
     createdAt: String
     updatedAt: String

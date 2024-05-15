@@ -261,8 +261,22 @@ const getComments = async(parent, args)=>{
         query = {_id: new ObjectId(args.id)};
     }
     
-    const comments = await commentModel.find(query);
+    // const comments = await commentModel.find(query);
 
+    const comments = await commentModel.aggregate([
+        {
+            $match: query
+        },
+        {
+            $lookup: {
+                from: "users",
+                localField: "userId",
+                foreignField: "_id",
+                as: "userDetail"
+            }
+        }
+    ]);
+    
     return comments
 }
 
@@ -869,13 +883,22 @@ const getChannelMonthlyAnalysisByChannelId = async (parent, args)=>{
 
 const getVideoMonthlyAnalysisByChannelId = async (parent, args)=>{
     try {
+        // console.log('args.year', args.year)
+
+        // const customDate = new Date(args.year, 0, 1, 0, 0, 0, 0);// June 30th, 2023, 05:40:27.071
+        // const dateString = customDate.toISOString();
+        // console.log(dateString);
+
+        // console.log('new Date(args.year, 0, 1)', new Date(args.year, 0, 1, 0, 0, 0, 0))
+        // console.log('new Date(args.year + 1, 0, 1)', new Date(args.year + 1, 0, 1))
+
+        
         const result = await videoModel.aggregate([
             {
                 $match:{
                     $and: [
                         {channelId: {$eq : new ObjectId(args.id)}},
-                        { createdAt: { $gte: new Date(args.year, 0, 1) } },
-                        { createdAt: { $lt: new Date(args.year + 1, 0, 1) } }
+                        { createdAt: { $gte: new Date(args.year, 1, 1),  $lt: new Date(args.year, 12, 31) } }
                     ]
                 }
             },
@@ -898,7 +921,7 @@ const getVideoMonthlyAnalysisByChannelId = async (parent, args)=>{
                 $sort: { "_id": 1 }
             }
         ]);
-    
+        // console.log('result-----------------------------------------------------------------------', result)
         return result;
     } catch (error) {
         console.error(error);
