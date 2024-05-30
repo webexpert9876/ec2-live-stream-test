@@ -13,6 +13,7 @@ const { uploadFile, getFileStream, deleteFile, deleteVideoFile, deleteMultipleVi
 const tattooCategoryModel = require('../models/tattooCategoryModel');
 const videoHistoryModel = require('../models/videoHistoryModel');
 const chatMessageModel = require('../models/chatMessageModel');
+const commentModel = require('../models/commentModel');
 
 
 // Upload Video with video information
@@ -338,14 +339,18 @@ exports.deleteVideo = catchAsyncErrors( async (req, res, next)=>{
     
     const allChatHistory = await chatMessageModel.find({videoId: video._id});
 
+    const allComments = await commentModel.find({videoId: video._id});
+
     if(allVideoHistory.length > 0){
         const history = await videoHistoryModel.deleteMany({videoId: video._id});
     }
-    
     if(allChatHistory.length > 0){
         const chats = await chatMessageModel.deleteMany({videoId: video._id});
     }
-
+    if(allComments.length > 0){
+        const comments = await commentModel.deleteMany({videoId: video._id});
+    }
+    
     const videoDeleteInfo = await videoModel.findByIdAndDelete(req.params.id);
 
     res.status(200).json({
