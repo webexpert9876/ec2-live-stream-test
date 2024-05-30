@@ -304,6 +304,11 @@ const typeDefs = `#graphql
     updatedAt: String
     numberofvisit: String
   }
+
+  type AllLivestream {
+    liveStream: [LiveStreamings]
+    totalLiveStream: Int
+  }
   
   ${query}
   ${mutation}

@@ -942,6 +942,47 @@ const getVideoMonthlyAnalysisByChannelId = async (parent, args)=>{
     }
 }
 
+const getAllLiveStreamWithCount = async (parent, args) =>{
+    let liveStreamCount=[{
+        liveStream: [],
+        totalLiveStream: 0
+    }];
+
+    liveStreamCount[0].liveStream = await liveStreamingModel.aggregate([
+        {
+            $match: {}
+        },
+        {
+            $sort: {createdAt: -1}
+        },
+        {
+            $skip: args.skip
+        },
+        {
+            $limit: args.limit 
+        },
+        {
+            $lookup: {
+                from: 'channels',
+                foreignField: '_id',
+                localField: 'channelId',
+                as: 'channelDetails'
+            }
+        },
+        {
+            $lookup: {
+                from: 'tattoocategories',
+                foreignField: '_id',
+                localField: 'tattooCategory',
+                as: 'tattooCategoryDetails'
+            }
+        }
+    ]);
+
+    liveStreamCount[0].totalLiveStream = await liveStreamingModel.find({}).count();
+    
+    return liveStreamCount
+}
 const Query = {
     users: getAllUsers,
     channels: getAllChannels,
@@ -966,6 +1007,7 @@ const Query = {
     countTattooCategoryFollower: countFollowerByTattooCategoryId,
     isTattooCategoryFollowing: isTattooCategoryFollowingByUser,
     liveStreamings: getLiveStreamings,
+    liveStreamWithCount: getAllLiveStreamWithCount,
     getSliderLiveStreams: getSliderLiveStreamings,
     getTattooCategoryAllViewers: getSingleTattooCategoryAllViewers,
     countChannelTotalFollowers: countChannelFollowersByChannelId,

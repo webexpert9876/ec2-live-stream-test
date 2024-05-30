@@ -48,6 +48,8 @@ const querySchema = `
     
     liveStreamings(tattooCategoryId: String, tagName: String, channelId: String, size: Int ): [LiveStreamings]
 
+    liveStreamWithCount(skip: Int, limit: Int): [AllLivestream]
+
     getSliderLiveStreams: [LiveStreamings]
 
     getTattooCategoryAllViewers(tattooCategoryId: String!): [LiveStreamings]
