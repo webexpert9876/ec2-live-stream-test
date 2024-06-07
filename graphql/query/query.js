@@ -23,9 +23,9 @@ const querySchema = `
     likesAndDislikes(id: ID, videoId: String): [LikeAndDislike],
 
     membershipPlans(id: ID): [MembershipPlans],
-
+    
     playlists(id: ID, userId: String): [Playlists],
-
+    
     replies(id: ID, commentId: String): [Reply],
     
     roles(id: ID): [Role],
@@ -33,29 +33,29 @@ const querySchema = `
     searchHistory(userId: String!, t: String, limit: Int, skip: Int): [SearchHistory],
 
     streams(artistId: String!): [Stream],
-
+    
     subscriptionDetails(id: ID, userId: String, channelId: String): [SubscriptionDetail],
 
     tattooCategories(id: ID, tagName: [String], urlSlug: String): [TattooCategory],
-
+    
     videoHistories(userId: String!, limit: Int, skip: Int): [VideoHistory],
     
     countVideoHistories(userId: String!): [VideoHistory],
-
+    
     countTattooCategoryFollower(tattooCategoryId: String!): [TattooCategoryFollowers],
-
+    
     isTattooCategoryFollowing(tattooCategoryId: String!, userId: String!): [TattooCategoryFollowers]
     
     liveStreamings(tattooCategoryId: String, tagName: String, channelId: String, size: Int ): [LiveStreamings]
-
+    
     liveStreamWithCount(skip: Int, limit: Int): [AllLivestream]
-
+    
     getSliderLiveStreams: [LiveStreamings]
-
+    
     getTattooCategoryAllViewers(tattooCategoryId: String!): [LiveStreamings]
     
     countChannelTotalFollowers(channelId: String!): [Followers]
-
+    
     isChannelFollowing(channelId: String!, userId: String!): [Followers]
 
     tagForStream: [Tags]
@@ -71,7 +71,9 @@ const querySchema = `
     getChannelAnalysisByChannelId(id: ID): [ChannelAnalytics]
     
     videoAnalysis(id: ID, year: String ): [Video]
+    
+    subscriptionPlans(channelId: ID): [SubscriptionPlans]
   }
-`;
+  `;
 
 module.exports = querySchema;

@@ -20,6 +20,7 @@ const tagModel = require('../../models/tagModel');
 const notificationModel = require('../../models/notificationModel');
 const channelAnalysisModel = require('../../models/channelAnalysisModel');
 const ObjectId = require('mongoose').Types.ObjectId;
+const subscriptionPlansModel = require('../../models/subscriptionPlanModel');
 
 // return all user with role details based on ( role or user id and if role or user id is not provided it return all users )
 const getAllUsers = async (parent, args)=>{
@@ -983,6 +984,18 @@ const getAllLiveStreamWithCount = async (parent, args) =>{
     
     return liveStreamCount
 }
+
+const getSubscriptionPlans = async (parent, args)=>{
+    let subscriptionPlans;
+    if(args.channelId){
+        subscriptionPlans =  await subscriptionPlansModel.find({channelId: new ObjectId(args.channelId)});
+    } else {
+        subscriptionPlans =  await subscriptionPlansModel.find({});
+    }
+
+    return subscriptionPlans
+}
+
 const Query = {
     users: getAllUsers,
     channels: getAllChannels,
@@ -1018,7 +1031,8 @@ const Query = {
     searchBar: getChannelForSearch,
     notification: getNotificationDetails,
     getChannelAnalysisByChannelId: getChannelMonthlyAnalysisByChannelId,
-    videoAnalysis: getVideoMonthlyAnalysisByChannelId
+    videoAnalysis: getVideoMonthlyAnalysisByChannelId,
+    subscriptionPlans: getSubscriptionPlans
 }
 
 module.exports = Query;

@@ -309,6 +309,17 @@ const typeDefs = `#graphql
     liveStream: [LiveStreamings]
     totalLiveStream: Int
   }
+
+  type SubscriptionPlans {
+    _id: ID
+    price: Int
+    planDuration: Int
+    planDurationUnit: String
+    channelId: String
+    channelDetails: [Channel]
+    createdAt: String
+    updatedAt: String
+  }
   
   ${query}
   ${mutation}

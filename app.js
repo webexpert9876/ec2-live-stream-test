@@ -27,6 +27,7 @@ const chatBlockedUserRoutes = require('./routes/chatBlockedUserRoutes');
 const videoViewRoutes = require('./routes/videoViewRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
 const channelAnalysisRoutes = require('./routes/channelAnalysisRoutes');
+const subscriptionPlanRoutes = require('./routes/subscriptionPlanRoutes');
 const { isAuthenticatedUser, authorizeRoles } = require('./middlewares/auth')
 const errorMiddleware = require('./middlewares/error');
 const requestIp = require('request-ip');
@@ -94,6 +95,7 @@ app.use('/prod/api', chatBlockedUserRoutes);
 app.use('/prod/api', notificationRoutes);
 app.use('/prod/api', channelAnalysisRoutes);
 app.use('/prod/public/api', videoViewRoutes);
+app.use('/prod/api', subscriptionPlanRoutes);
 
 app.use(errorMiddleware);
 
