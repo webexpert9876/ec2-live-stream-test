@@ -37,9 +37,9 @@ exports.createChannel = catchAsyncErrors( async (req, res, next)=>{
 
             const unlinkFile = util.promisify(fs.unlink);
 
-            const result = await uploadFile(file)
+            const result = await uploadFile(file, req.body.userId)
             await unlinkFile(file.path)
-            newChannelProfile =  result.fileNameWithExtenstion
+            newChannelProfile =  `${req.body.userId}/${result.fileNameWithExtenstion}`
 
         } else {
             return next(new ErrorHandler("Unsupported file please provide only image", 400));
@@ -54,6 +54,10 @@ exports.createChannel = catchAsyncErrors( async (req, res, next)=>{
     // let streamKey = uuidv4();
 
     // const streamDetail = await streamModel.create({title: req.body.channelName, description: req.body.channelName, streamKey, artistId: channelData.userId, channelId: channelData._id});
+    
+    console.log("-------------channelData---------", channelData);
+
+
 
     res.status(200).json({
         success: true,
@@ -106,9 +110,9 @@ exports.updateChannel = catchAsyncErrors( async (req, res, next)=>{
 
             const unlinkFile = util.promisify(fs.unlink);
 
-            const result = await uploadFile(file)
+            const result = await uploadFile(file, channelFound.userId);
             await unlinkFile(file.path)
-            newChannelProfile =  result.fileNameWithExtenstion
+            newChannelProfile =  `${channelFound.userId}/${result.fileNameWithExtenstion}`
 
         } else {
             return next(new ErrorHandler("Unsupported file please provide only image", 400));
@@ -167,9 +171,9 @@ exports.updateChannelCoverImage = catchAsyncErrors( async (req, res, next)=>{
 
             const unlinkFile = util.promisify(fs.unlink);
 
-            const result = await uploadFile(file)
+            const result = await uploadFile(file, channelFound.userId)
             await unlinkFile(file.path)
-            newChannelCoverImage =  result.fileNameWithExtenstion
+            newChannelCoverImage =  `${channelFound.userId}/${result.fileNameWithExtenstion}`
 
         } else {
             return next(new ErrorHandler("Unsupported file please provide only image", 400));
@@ -295,9 +299,9 @@ exports.updateChannelByAdmin = catchAsyncErrors( async (req, res, next)=>{
 
             const unlinkFile = util.promisify(fs.unlink);
 
-            const result = await uploadFile(file)
+            const result = await uploadFile(file, channelFound.userId)
             await unlinkFile(file.path)
-            newChannelProfile =  result.fileNameWithExtenstion
+            newChannelProfile =  `${channelFound.userId}/${result.fileNameWithExtenstion}`
 
         } else {
             return next(new ErrorHandler("Unsupported file please provide only image", 400));

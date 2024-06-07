@@ -49,9 +49,9 @@ exports.updateStream = catchAsyncErrors( async (req, res, next)=>{
     
             const unlinkFile = util.promisify(fs.unlink);
     
-            const result = await uploadFile(file)
+            const result = await uploadFile(file, streamDetailFound.artistId)
             await unlinkFile(file.path);
-            newPreviewImage =  result.fileNameWithExtenstion
+            newPreviewImage =  `${streamDetailFound.artistId}/${result.fileNameWithExtenstion}`
             
         } else {
             return next(new ErrorHandler("Unsupported file please provide only image", 400));

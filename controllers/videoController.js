@@ -40,14 +40,14 @@ exports.uploadVideo = catchAsyncErrors(async(req, res, next)=>{
         }
 
         for(let i =0; i<file.length; i++ ){
-            const result = await uploadFileWithQuality(file[i])
+            const result = await uploadFileWithQuality(file[i], userId)
             if(file[i].mimetype.match(/^image/)){
                 
-                videoPreviewImage =  result.fileNameWithExtenstion;
+                videoPreviewImage =  `${userId}/${result.fileNameWithExtenstion}`;
                 await unlinkFile(file[i].path)
             } else if(file[i].mimetype.match(/^video/)) {
                 
-                videoUrl = result.fileNameWithExtenstion;
+                videoUrl = `${userId}/${result.fileNameWithExtenstion}`;
                 videoQualityUrl = result.videoQualities;
                 await unlinkFile(file[i].path)
             } else {
@@ -121,16 +121,16 @@ exports.updateVideo = catchAsyncErrors( async (req, res, next)=>{
                 
                     const unlinkFile = util.promisify(fs.unlink);
 
-                    const result = await uploadFile(files[i])
+                    const result = await uploadFile(files[i], userId)
                     await unlinkFile(files[i].path)
-                    newPreviewImage =  result.fileNameWithExtenstion
+                    newPreviewImage =  `${userId}/${result.fileNameWithExtenstion}`
                 } else {
                     
                     const unlinkFile = util.promisify(fs.unlink);
 
-                    const result = await uploadFile(files[i])
+                    const result = await uploadFile(files[i], userId)
                     await unlinkFile(files[i].path)
-                    newPreviewImage =  result.fileNameWithExtenstion
+                    newPreviewImage =  `${userId}/${result.fileNameWithExtenstion}`
                 }
                 
             } else if(files[i].mimetype.match(/^video/)) {
@@ -161,10 +161,10 @@ exports.updateVideo = catchAsyncErrors( async (req, res, next)=>{
                     const unlinkFile = util.promisify(fs.unlink);
 
                     // const result = await uploadFile(files[i])
-                    const result = await uploadFileWithQuality(files[i]);
+                    const result = await uploadFileWithQuality(files[i], videoDetailFound.userId);
 
                     await unlinkFile(files[i].path);
-                    newVideoFile =  result.fileNameWithExtenstion;
+                    newVideoFile =  `${videoDetailFound.userId}/${result.fileNameWithExtenstion}`;
                     newVideoQuality =result.videoQualities;
                     
                 } else {
@@ -172,10 +172,10 @@ exports.updateVideo = catchAsyncErrors( async (req, res, next)=>{
                     const unlinkFile = util.promisify(fs.unlink);
                     
                     // const result = await uploadFile(files[i])
-                    const result = await uploadFileWithQuality(files[i]);
+                    const result = await uploadFileWithQuality(files[i], videoDetailFound.userId);
 
                     await unlinkFile(files[i].path);
-                    newVideoFile =  result.fileNameWithExtenstion;
+                    newVideoFile =  `${videoDetailFound.userId}/${result.fileNameWithExtenstion}`;
                     newVideoQuality =result.videoQualities;
                 }
             }

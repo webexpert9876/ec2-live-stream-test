@@ -99,8 +99,8 @@ exports.updateUser = catchAsyncErrors( async (req, res, next)=>{
 
             const unlinkFile = util.promisify(fs.unlink);    
             // const file = req.file
-            result = await uploadFile(file);
-            req.body.profilePicture = result.fileNameWithExtenstion
+            result = await uploadFile(file, 'profile');
+            req.body.profilePicture = `profile/${result.fileNameWithExtenstion}`
             await unlinkFile(file.path)
         } else {
             return next(new ErrorHandler("Unsupported file please provide only image", 400));

@@ -25,8 +25,8 @@ exports.createTattoCategory = catchAsyncErrors(async(req, res, next)=>{
         let file = req.file;
         if(file.mimetype.match(/^image/)){
             const unlinkFile = util.promisify(fs.unlink);
-            result = await uploadFile(file)
-            profilePicture = result.fileNameWithExtenstion
+            result = await uploadFile(file, 'category')
+            profilePicture = `category/${result.fileNameWithExtenstion}`
             await unlinkFile(file.path)
         } else {
             return next(new ErrorHandler("Unsupported file please provide only image", 400));
@@ -77,8 +77,8 @@ exports.updateTattoCategory = catchAsyncErrors( async (req, res, next)=>{
 
             const unlinkFile = util.promisify(fs.unlink);
             // const file = req.file
-            result = await uploadFile(file)
-            req.body.profilePicture = result.fileNameWithExtenstion
+            result = await uploadFile(file, 'category')
+            req.body.profilePicture = `category/${result.fileNameWithExtenstion}`
             await unlinkFile(file.path)
         } else {
             return next(new ErrorHandler("Unsupported file please provide only image", 400));

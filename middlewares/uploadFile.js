@@ -6,7 +6,7 @@ const path = require('path');
 const ffmpeg = require('fluent-ffmpeg')
 
 // This function upload the object from s3 bucket
-async function uploadFile(file) {
+async function uploadFile(file, userId) {
 
     const s3 = new S3({
         region:process.env.AWS_REGION,
@@ -33,13 +33,13 @@ async function uploadFile(file) {
         uploadParams = {
             Bucket: bucketName,
             Body: fileStream,
-            Key: `images/${file.filename}${ext}`
+            Key: `images/${userId}/${file.filename}${ext}`
           }
     } else if(file.mimetype.match(/^video/)) {
         uploadParams = {
             Bucket: bucketName,
             Body: fileStream,
-            Key: `videos/${file.filename}${ext}`
+            Key: `videos/${userId}${file.filename}${ext}`
         }
     }
 
@@ -106,6 +106,7 @@ async function deleteFile(fileKey) {
     
     // var ext = await fileKey.substring(fileKey.lastIndexOf('.'), fileKey.length);
     var ext = path.extname(fileKey);
+    console.log('ext--------------------------->', ext);
 
     let imageTypes = ['.webp', '.svg', '.png', '.jpg', '.jpeg', '.jfif', '.gif', '.avif', '.bmp', '.tiff', '.ico', '.eps', '.raw', '.psd']
     let videoTypes = ['.mp4', '.mov', '.avi', '.mkv', '.wmv', '.flv', '.webm', '.mpeg', '.mpg', '.m4v', '.3gp', '.rm', '.rmvb', '.ts']
@@ -233,7 +234,7 @@ exports.deleteMultipleVideosQuality = deleteMultipleVideosQuality
 
 
 // function create 3 quality of single uploaded video
-async function uploadFileWithQuality(file) {
+async function uploadFileWithQuality(file, userId) {
     const unlinkFile = util.promisify(fs.unlink);
     return new Promise(async (resolve, reject) => {
         let isVideo;
@@ -260,7 +261,7 @@ async function uploadFileWithQuality(file) {
             uploadParams = {
                 Bucket: bucketName,
                 Body: imageFileStream,
-                Key: `images/${file.filename}${ext}`
+                Key: `images/${userId}/${file.filename}${ext}`
             }
 
             const command = await new PutObjectCommand(uploadParams);
@@ -284,7 +285,7 @@ async function uploadFileWithQuality(file) {
             uploadParams = {
                 Bucket: bucketName,
                 Body: fileStream,
-                Key: `videos/${file.filename}${ext}`
+                Key: `videos/${userId}/${file.filename}${ext}`
             }
 
             const highQualityFilePath = `${path.dirname(__dirname)}/media/uploaded/${file.filename}_1080.mp4`;
@@ -297,7 +298,7 @@ async function uploadFileWithQuality(file) {
                 let uploadParamsInfo = {
                     Bucket: bucketName,
                     Body: originalFileStreams,
-                    Key: `videos/${file.filename}${ext}`
+                    Key: `videos/${userId}/${file.filename}${ext}`
                 }
 
                 const command = await new PutObjectCommand(uploadParamsInfo);
@@ -308,9 +309,9 @@ async function uploadFileWithQuality(file) {
             
                 if(isVideo){
                     response.videoQualities = [
-                        {quality: '1080', url: `${file.filename}_1080${ext}`},
-                        {quality: '720', url: `${file.filename}_720${ext}`},
-                        {quality: '480', url: `${file.filename}_480${ext}`}
+                        {quality: '1080', url: `${userId}/${file.filename}_1080${ext}`},
+                        {quality: '720', url: `${userId}/${file.filename}_720${ext}`},
+                        {quality: '480', url: `${userId}/${file.filename}_480${ext}`}
                     ];
                 }
                 
@@ -320,7 +321,7 @@ async function uploadFileWithQuality(file) {
                 let uploadParamsInfo = {
                     Bucket: bucketName,
                     Body: originalFileStreams,
-                    Key: `videos/${file.filename}${ext}`
+                    Key: `videos/${userId}/${file.filename}${ext}`
                 }
 
                 const command = await new PutObjectCommand(uploadParamsInfo);
@@ -330,9 +331,9 @@ async function uploadFileWithQuality(file) {
             
                 if(isVideo){
                     response.videoQualities = [
-                        {quality: '1080', url: `${file.filename}_1080${ext}`},
-                        {quality: '720', url: `${file.filename}_720${ext}`},
-                        {quality: '480', url: `${file.filename}_480${ext}`}
+                        {quality: '1080', url: `${userId}/${file.filename}_1080${ext}`},
+                        {quality: '720', url: `${userId}/${file.filename}_720${ext}`},
+                        {quality: '480', url: `${userId}/${file.filename}_480${ext}`}
                     ];
                 }
             }
@@ -415,7 +416,7 @@ async function uploadFileWithQuality(file) {
                     let uploadParamsInfo = {
                         Bucket: bucketName,
                         Body: fileStreams,
-                        Key: `videos/${fileName}`
+                        Key: `videos/${userId}/${fileName}`
                     }
                     
                     const command = await new PutObjectCommand(uploadParamsInfo);
