@@ -320,6 +320,12 @@ const typeDefs = `#graphql
     createdAt: String
     updatedAt: String
   }
+
+  type ChannelActivePlan {
+    _id: ID
+    channelId: String
+    isPaid: Boolean
+  }
   
   ${query}
   ${mutation}

@@ -73,6 +73,8 @@ const querySchema = `
     videoAnalysis(id: ID, year: String ): [Video]
     
     subscriptionPlans(channelId: ID): [SubscriptionPlans]
+    
+    getChannelActivePlans(planId: ID, channelId: String): [ChannelActivePlan]
   }
   `;
 

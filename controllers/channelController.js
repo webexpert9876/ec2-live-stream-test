@@ -10,6 +10,7 @@ const fs = require('fs');
 const util = require('util');
 const { uploadFile, deleteFile } = require('../middlewares/uploadFile');
 const sendEmail = require('../utils/sendEmail');
+const channelActivePlanModel = require('../models/channelActivePlanModel');
 
 // Create channel
 exports.createChannel = catchAsyncErrors( async (req, res, next)=>{
@@ -57,7 +58,7 @@ exports.createChannel = catchAsyncErrors( async (req, res, next)=>{
     
     console.log("-------------channelData---------", channelData);
 
-
+    const activePlanData = await channelActivePlanModel.create({channelId: channelData._id, isPaid: false});
 
     res.status(200).json({
         success: true,
