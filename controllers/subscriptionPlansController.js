@@ -4,6 +4,28 @@ const ErrorHandler = require('../utils/errorHandler');
 
 // Create subscription plan
 exports.createPlan = catchAsyncErrors(async(req, res, next)=>{
+    const { price, channelId } = req.body
+
+    const planList = await subscriptionPlansModel.find({channelId: channelId})
+
+    if(planList.length >= 3){
+        return res.status(403).json({ 
+            success: false,
+            isPlanCountReached: true,
+            message: 'You have reached the maximum number of plan updates'
+        });
+    }
+
+    const isPriceExists = await subscriptionPlansModel.find({channelId: channelId, price: price})
+
+    if(isPriceExists.length > 0) {
+        return res.status(200).json({
+            success: false,
+            isPriceExists: true,
+            message: 'Subscription amount already exists please change the subscription amount.'
+        });
+    }
+
     const subscriptionPlan = await subscriptionPlansModel.create(req.body);
 
      res.status(200).json({
@@ -19,9 +41,34 @@ exports.updateSubscriptionPlan = catchAsyncErrors( async (req, res, next)=>{
     if(!id){
         return next(new ErrorHandler("Please Enter id", 400))
     }
+    const subDetail = await subscriptionPlansModel.findById(id);
 
+    if(!subDetail){
+        return next(new ErrorHandler("Subscription not found", 400));
+    }
+
+    if(subDetail.planUpdateCount >= 3) {
+        return res.status(403).json({ 
+            success: false,
+            isPlanCountReached: true,
+            message: 'You have reached the maximum number of plan updates'
+        });
+    }
+
+    const isPriceExists = await subscriptionPlansModel.find({channelId: subDetail.channelId, price: subscriptionInfo.price})
+
+    if(isPriceExists.length > 0) {
+        return res.status(200).json({
+            success: false,
+            isPriceExists: true,
+            message: 'Subscription amount already exists please change the subscription amount.'
+        });
+    }
+    
+    let planUpdateCount = subDetail.planUpdateCount + 1;
+    
     const subscriptionInfoData = await subscriptionPlansModel.findByIdAndUpdate(id, {
-        ...subscriptionInfo
+        ...subscriptionInfo, planUpdateCount
     },{
         new: true,
         runValidators: true,

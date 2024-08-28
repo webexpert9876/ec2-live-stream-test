@@ -29,13 +29,16 @@ const notificationRoutes = require('./routes/notificationRoutes');
 const channelAnalysisRoutes = require('./routes/channelAnalysisRoutes');
 const subscriptionPlanRoutes = require('./routes/subscriptionPlanRoutes');
 const channelActivePlanRoutes = require('./routes/channelActivePlanRoutes');
+const stripeRoutes = require('./routes/stripeRoutes');
+const stripeConnectedAccountRoutes = require('./routes/stripeConnectedAccountRoutes');
 const { isAuthenticatedUser, authorizeRoles } = require('./middlewares/auth')
 const errorMiddleware = require('./middlewares/error');
 const requestIp = require('request-ip');
 const passport = require('passport');
 var GoogleStrategy = require('passport-google-oauth20').Strategy;
-var session = require('express-session')
-const {googleSignInValidation} = require('./controllers/authenticationController')
+var session = require('express-session');
+const {googleSignInValidation} = require('./controllers/authenticationController');
+const cronJobs = require('./cronjob');
 
 app.use(cors());
 app.use('/prod', express.static(path.join(__dirname, 'public')));
@@ -66,6 +69,10 @@ passport.serializeUser(function (user, cb) {
 passport.deserializeUser(function (obj, cb) {
   cb(null, obj);
 });
+
+cronJobs();
+
+app.use('/prod/public/', stripeRoutes);
 
 // Routings for api
 app.use(route.all('/prod/api/*', isAuthenticatedUser))
@@ -98,6 +105,7 @@ app.use('/prod/api', channelAnalysisRoutes);
 app.use('/prod/public/api', videoViewRoutes);
 app.use('/prod/api', subscriptionPlanRoutes);
 app.use('/prod/api', channelActivePlanRoutes);
+app.use('/prod/api', stripeConnectedAccountRoutes);
 
 app.use(errorMiddleware);
 

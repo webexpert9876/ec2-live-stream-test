@@ -22,6 +22,8 @@ const channelAnalysisModel = require('../../models/channelAnalysisModel');
 const ObjectId = require('mongoose').Types.ObjectId;
 const subscriptionPlansModel = require('../../models/subscriptionPlanModel');
 const channelActivePlanModel = require('../../models/channelActivePlanModel');
+const stripeConnectedAccountModel = require('../../models/stripeConnectedAccountModel');
+const transactionsModel = require('../../models/transactionsModel');
 
 // return all user with role details based on ( role or user id and if role or user id is not provided it return all users )
 const getAllUsers = async (parent, args)=>{
@@ -1010,6 +1012,62 @@ const getChannelActivePlans = async (parent, args)=>{
     return activePlans
 }
 
+
+const getConnectAccountDetails = async(parent, args)=>{
+    let connectAccount=[];
+    const connectAccountDetail= await stripeConnectedAccountModel.findOne({channelId: args.channelId});
+    connectAccount.push(connectAccountDetail)
+    return connectAccount
+}
+
+const getAllConnectAccounts = async(parent, args)=>{
+    // let connectAccount=[];
+    const connectAccountDetail = await stripeConnectedAccountModel.aggregate([
+        {$match: {}},
+        {
+            $lookup: {
+              from: 'channels',
+              localField: 'channelId',
+              foreignField: '_id',
+              as: 'channelDetails'
+            }
+        },
+        {
+            $sort: {
+                createdAt: -1
+            }
+        }
+    ]);
+    // connectAccount.push(connectAccountDetail)
+    return connectAccountDetail
+    // return connectAccount
+}
+
+const getTransactionListByUserId = async(parent, args)=>{
+    // let connectAccount=[];
+    const txnList= await transactionsModel.aggregate([
+        {
+            $match : { userId: new ObjectId( args.userId ) } 
+        },
+        {
+            $lookup: {
+              from: 'channels',
+              localField: 'channelId',
+              foreignField: '_id',
+              as: 'channelDetails'
+            }
+        },
+        {
+            $sort: {
+                createdAt: -1
+            }
+        }
+    ]);
+    // const txnList= await transactionsModel.find({userId: args.userId}).sort({createdAt: -1});
+    // connectAccount.push(connectAccountDetail)
+    return txnList
+}
+
 const Query = {
     users: getAllUsers,
     channels: getAllChannels,
@@ -1047,7 +1105,10 @@ const Query = {
     getChannelAnalysisByChannelId: getChannelMonthlyAnalysisByChannelId,
     videoAnalysis: getVideoMonthlyAnalysisByChannelId,
     subscriptionPlans: getSubscriptionPlans,
-    getChannelActivePlans: getChannelActivePlans
+    getChannelActivePlans: getChannelActivePlans,
+    getConnectAccountInfo: getConnectAccountDetails,
+    getConnectAccountList: getAllConnectAccounts,
+    getTransactionList: getTransactionListByUserId
 }
 
 module.exports = Query;

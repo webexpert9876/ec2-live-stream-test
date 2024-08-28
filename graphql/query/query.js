@@ -75,6 +75,12 @@ const querySchema = `
     subscriptionPlans(channelId: ID): [SubscriptionPlans]
     
     getChannelActivePlans(planId: ID, channelId: String): [ChannelActivePlan]
+    
+    getConnectAccountInfo(channelId: String): [ConnectAccounts]
+    
+    getConnectAccountList: [ConnectAccounts]
+    
+    getTransactionList(userId: String): [Transactions]
   }
   `;
 

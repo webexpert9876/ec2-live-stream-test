@@ -19,6 +19,10 @@ const subscriptionPlansSchema = new mongoose.Schema({
         ref: 'channels',
         required: [true, "Please Enter channel id"]
     },
+    planUpdateCount: {
+        type: Number,
+        default: 0, // Track the number of times the plan has been updated
+    },
     // userId:{
     //     type: mongoose.Types.ObjectId,
     //     ref: 'users',

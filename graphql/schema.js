@@ -317,6 +317,7 @@ const typeDefs = `#graphql
     planDurationUnit: String
     channelId: String
     channelDetails: [Channel]
+    planUpdateCount: Int
     createdAt: String
     updatedAt: String
   }
@@ -325,6 +326,45 @@ const typeDefs = `#graphql
     _id: ID
     channelId: String
     isPaid: Boolean
+  }
+  
+  type ConnectAccounts {
+    _id: ID
+    connectAccountId: String,
+    userId: String
+    channelId: String
+    userDetails: [User]
+    channelDetails: [Channel]
+    isAccountCreated: String
+    AccountPaymentStatus: String
+    isTransfer: String
+    createdAt: String
+    updatedAt: String
+  }
+
+  type Transactions {
+    _id: ID
+    checkoutSessionId: String,
+    userId: String
+    channelId: String
+    channelDetails: [Channel]
+    status: String
+    amount: Int
+    reason: String
+    paymentIntentId: String
+    paymentId: String
+    platformFees: Int
+    stripeFees: Int
+    artistAmount: Int
+    isTransferToArtist: Boolean
+    artistAccountId: String
+    transactionDate: String
+    paymentMethod: String
+    userEmail: String
+    planDuration: Int
+    planDurationUnit: String
+    createdAt: String
+    updatedAt: String
   }
   
   ${query}

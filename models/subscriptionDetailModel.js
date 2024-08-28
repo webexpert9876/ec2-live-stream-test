@@ -17,7 +17,7 @@ const subscriptionDetailSchema = new mongoose.Schema({
     },
     planDurationUnit: {
         type: String,
-        enum: ['year'],
+        enum: ['month', 'year'],
         required: [true, "Please Enter subscription plan duration unit year."]
     },
     startDate: {
