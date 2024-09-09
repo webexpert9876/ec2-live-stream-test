@@ -4,7 +4,8 @@ const stripeConnectedAccountModel = require('../models/stripeConnectedAccountMod
 const transactionsModel = require('../models/transactionsModel');
 const subscriptionDetailModel = require('../models/subscriptionDetailModel');
 const ErrorHandler = require('../utils/errorHandler');
-const stripe = require('stripe')('sk_test_51PMP4BLhsqLL49rZBED0LNv5P6OzMRirZe3F7BcEZVLU3gGXkXFG8n7nExzHqQB8nFYUd02wMtt01Enq5I7PHdK000EP2fSirO');
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+// const stripe = require('stripe')('sk_test_51PMP4BLhsqLL49rZBED0LNv5P6OzMRirZe3F7BcEZVLU3gGXkXFG8n7nExzHqQB8nFYUd02wMtt01Enq5I7PHdK000EP2fSirO');
 const sendEmail = require('../utils/sendEmail');
 const userModel = require('../models/userModel');
 
@@ -254,6 +255,16 @@ const userModel = require('../models/userModel');
 // ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 exports.createConnectedAccount = catchAsyncErrors(async (req, res, next ) => {
   try {
+
+    const { name, channelId, urlSlug, userId, email } = req.body;
+
+    let metaData = {
+      channelName: name,
+      channelId: channelId,
+      urlSlug: urlSlug,
+      email: email
+    }
+
     const account = await stripe.accounts.create({
       controller: {
         stripe_dashboard: {
@@ -266,10 +277,16 @@ exports.createConnectedAccount = catchAsyncErrors(async (req, res, next ) => {
           payments: "application"
         },
       },
+      email: email,
       business_type: 'individual',
       business_profile: {
+        name: name,
         product_description: 'Streaming videos and earning through subscriptions',
+        mcc: 5815,
+        support_email: 'webexpert987@gmail.com',
+        url: 'www.livetattoostreaming.com'
       },
+      metadata: metaData
     });
 
     res.json({account: account.id});
@@ -306,21 +323,21 @@ exports.createConnectedAccountSession = catchAsyncErrors(async (req, res, next )
 
 
 exports.connectAccountWebhook = catchAsyncErrors( async (req, res, next)=>{ 
-  // console.log('running', req.body);
+  console.log('-----connect account webhook-----', req.body);
   let accInfoByWebhook;
   if(req.body?.type == "account.updated") {
     accInfoByWebhook = req.body.data?.object
-    // console.log('capabilities', req.body.data.object?.capabilities);
-    // console.log('business_profile', req.body.data.object?.business_profile);
-    // console.log('controller', req.body.data.object?.controller);
-    // console.log('future_requirements', req.body.data.object?.future_requirements);
-    // console.log('requirements', req.body.data.object?.requirements);
-    // console.log('settings', req.body.data.object?.settings);
-    // console.log('external_accounts', req.body.data.object?.external_accounts);
-    // console.log('login_links', req.body.data.object?.login_links);
-    // console.log('details_submitted', req.body.data.object?.details_submitted);
-    // console.log('payouts_enabled', req.body.data.object?.payouts_enabled);
-    // console.log('--------------------------------------------------------------------------------------------------------------------------------------------------------------------------');
+    console.log('capabilities', req.body.data.object?.capabilities);
+    console.log('business_profile', req.body.data.object?.business_profile);
+    console.log('controller', req.body.data.object?.controller);
+    console.log('future_requirements', req.body.data.object?.future_requirements);
+    console.log('requirements', req.body.data.object?.requirements);
+    console.log('settings', req.body.data.object?.settings);
+    console.log('external_accounts', req.body.data.object?.external_accounts);
+    console.log('login_links', req.body.data.object?.login_links);
+    console.log('details_submitted', req.body.data.object?.details_submitted);
+    console.log('payouts_enabled', req.body.data.object?.payouts_enabled);
+    console.log('--------------------------------------------------------------------------------------------------------------------------------------------------------------------------');
 
     let accStatus;
     if(accInfoByWebhook?.details_submitted){
@@ -335,6 +352,15 @@ exports.connectAccountWebhook = catchAsyncErrors( async (req, res, next)=>{
     }
 
     const accountInfo = await stripeConnectedAccountModel.findOneAndUpdate({ connectAccountId: accInfoByWebhook?.id }, updateInfo );
+  }
+
+  if(req.body?.type == 'capability.updated') {
+
+    console.log('-------------------------------', req.body.data.object?.id);
+    console.log('capability.updated future_requirements', req.body.data.object?.future_requirements);
+    console.log('capability.updated requirements', req.body.data.object?.requirements);
+    console.log('previous_attributes', req.body.data.previous_attributes?.requirements);
+    
   }
 
   res.status(200).send('Webhook received');
@@ -782,16 +808,36 @@ exports.expressDashboardLink = catchAsyncErrors(async (req, res, next)=>{
 });
 
 
-exports.getAllConnectedAccount = catchAsyncErrors(async (req, res, next)=>{
-  const accounts = await stripe.accounts.list({
-    limit: 50,
+// exports.getAllConnectedAccount = catchAsyncErrors(async (req, res, next)=>{
+//   const accounts = await stripe.accounts.list({
+//     limit: 5,
+//   });
+  
+//   res.status(200).json({
+//     success: true,
+//     accounts
+//   })
+// });
+
+exports.getConnectAccountBalance = catchAsyncErrors(async (req, res, next)=>{
+  const balance = await stripe.balance.retrieve({
+    stripeAccount: req.params.id,
   });
   
   res.status(200).json({
     success: true,
-    accounts
+    balance
   })
 });
+
+// exports.getSingleConnectAccount = catchAsyncErrors(async (req, res, next)=>{
+//   const account = await stripe.account.retrieve(req.params.id);
+  
+//   res.status(200).json({
+//     success: true,
+//     account
+//   })
+// });
 
 
 

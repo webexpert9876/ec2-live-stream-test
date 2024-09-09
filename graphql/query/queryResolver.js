@@ -991,9 +991,9 @@ const getAllLiveStreamWithCount = async (parent, args) =>{
 const getSubscriptionPlans = async (parent, args)=>{
     let subscriptionPlans;
     if(args.channelId){
-        subscriptionPlans =  await subscriptionPlansModel.find({channelId: new ObjectId(args.channelId)});
+        subscriptionPlans =  await subscriptionPlansModel.find({channelId: new ObjectId(args.channelId)}).sort({createdAt: -1}).limit(3);
     } else {
-        subscriptionPlans =  await subscriptionPlansModel.find({});
+        subscriptionPlans =  await subscriptionPlansModel.find({}).sort({createdAt: -1}).limit(3);
     }
 
     return subscriptionPlans

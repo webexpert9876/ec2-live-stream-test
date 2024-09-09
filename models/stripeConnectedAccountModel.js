@@ -23,9 +23,26 @@ const connectedAccountSchema = new mongooose.Schema({
         default: 'notCreated',
         required: [true, "Please provide account created or not"]
     },
+    // is transfer capabilites available or not
     isTransfer: {
         type: String,
         // enum: ['enabled', 'rejected', 'in_review', 'restricted', 'restricted_soon', 'pending', 'disabled'],
+    },
+    isPayoutEnabled: {
+        type: Boolean,
+        default: false  // payout is enabled or not 
+    },
+    payoutType: {
+        type: String,
+        default: 'manual'  // payout type is daily and manual
+    },
+    isRequirementPending: {
+        type: Boolean,
+        default: true
+    },
+    isAccountActive: {
+        type: Boolean,
+        default: true  // is stripe account acitve or not
     }
 },
 {

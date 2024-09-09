@@ -338,6 +338,10 @@ const typeDefs = `#graphql
     isAccountCreated: String
     AccountPaymentStatus: String
     isTransfer: String
+    isPayoutEnabled: Boolean
+    isRequirementPending: Boolean
+    isAccountActive: Boolean
+    payoutType: String
     createdAt: String
     updatedAt: String
   }

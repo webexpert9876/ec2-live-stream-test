@@ -12,7 +12,9 @@ const {
         paymentCheckOut,
         checkoutWebhook,
         expressDashboardLink,
-        getAllConnectedAccount
+        getAllConnectedAccount,
+        getConnectAccountBalance,
+        getSingleConnectAccount
     } = require('../controllers/stripeController');
 const router = express.Router();
 
@@ -42,7 +44,13 @@ router.route('/checkout/webhook').post(checkoutWebhook);
 
 router.route('/login/express/dashboard').post(expressDashboardLink);
 
-router.route('/get/all/connected/account').get(getAllConnectedAccount);
+// router.route('/get/all/connected/account').get(getAllConnectedAccount);
+
+router.route('/get/connected/account/balance/:id').get(getConnectAccountBalance);
+
+// router.route('/get/single/connected/account/:id').get(getSingleConnectAccount);
+
+// router.route('/update/connected/account/:id').get(getSingleConnectAccount);
 
 
 module.exports = router
