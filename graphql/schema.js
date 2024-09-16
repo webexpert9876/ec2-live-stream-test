@@ -352,6 +352,7 @@ const typeDefs = `#graphql
     userId: String
     channelId: String
     channelDetails: [Channel]
+    usersDetail: [User]
     status: String
     amount: Int
     reason: String

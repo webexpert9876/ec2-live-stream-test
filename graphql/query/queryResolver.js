@@ -1068,6 +1068,35 @@ const getTransactionListByUserId = async(parent, args)=>{
     return txnList
 }
 
+const getAllTransactionListForAdmin = async(parent, args)=>{
+
+    const txnList= await transactionsModel.aggregate([
+        {
+            $lookup: {
+              from: 'channels',
+              localField: 'channelId',
+              foreignField: '_id',
+              as: 'channelDetails'
+            }
+        },
+        {
+            $lookup: {
+              from: 'users',
+              localField: 'userId',
+              foreignField: '_id',
+              as: 'usersDetail'
+            }
+        },
+        {
+            $sort: {
+                createdAt: -1
+            }
+        }
+    ]);
+
+    return txnList
+}
+
 const Query = {
     users: getAllUsers,
     channels: getAllChannels,
@@ -1108,7 +1137,8 @@ const Query = {
     getChannelActivePlans: getChannelActivePlans,
     getConnectAccountInfo: getConnectAccountDetails,
     getConnectAccountList: getAllConnectAccounts,
-    getTransactionList: getTransactionListByUserId
+    getTransactionList: getTransactionListByUserId,
+    getAllTransactions: getAllTransactionListForAdmin
 }
 
 module.exports = Query;

@@ -81,6 +81,8 @@ const querySchema = `
     getConnectAccountList: [ConnectAccounts]
     
     getTransactionList(userId: String): [Transactions]
+    
+    getAllTransactions: [Transactions]
   }
   `;
 

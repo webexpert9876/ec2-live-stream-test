@@ -327,16 +327,16 @@ exports.connectAccountWebhook = catchAsyncErrors( async (req, res, next)=>{
   let accInfoByWebhook;
   if(req.body?.type == "account.updated") {
     accInfoByWebhook = req.body.data?.object
-    console.log('capabilities', req.body.data.object?.capabilities);
-    console.log('business_profile', req.body.data.object?.business_profile);
-    console.log('controller', req.body.data.object?.controller);
-    console.log('future_requirements', req.body.data.object?.future_requirements);
-    console.log('requirements', req.body.data.object?.requirements);
-    console.log('settings', req.body.data.object?.settings);
-    console.log('external_accounts', req.body.data.object?.external_accounts);
-    console.log('login_links', req.body.data.object?.login_links);
-    console.log('details_submitted', req.body.data.object?.details_submitted);
-    console.log('payouts_enabled', req.body.data.object?.payouts_enabled);
+    console.log('capabilities--', req.body.data.object?.capabilities);
+    console.log('business_profile--', req.body.data.object?.business_profile);
+    console.log('controller--', req.body.data.object?.controller);
+    console.log('future_requirements--', req.body.data.object?.future_requirements);
+    console.log('requirements--', req.body.data.object?.requirements);
+    console.log('settings--', req.body.data.object?.settings);
+    console.log('external_accounts--', req.body.data.object?.external_accounts);
+    console.log('login_links--', req.body.data.object?.login_links);
+    console.log('details_submitted--', req.body.data.object?.details_submitted);
+    console.log('payouts_enabled--', req.body.data.object?.payouts_enabled);
     console.log('--------------------------------------------------------------------------------------------------------------------------------------------------------------------------');
 
     let accStatus;
@@ -348,7 +348,9 @@ exports.connectAccountWebhook = catchAsyncErrors( async (req, res, next)=>{
 
     updateInfo = {
       isAccountCreated: accStatus,
-      isTransfer: accInfoByWebhook?.capabilities?.transfers
+      isTransfer: accInfoByWebhook?.capabilities?.transfers,
+      isPayoutEnabled: req.body.data.object?.payouts_enabled,
+      isRequirementPending: req.body.data.object?.requirements?.eventually_due.length == 0? false : true,
     }
 
     const accountInfo = await stripeConnectedAccountModel.findOneAndUpdate({ connectAccountId: accInfoByWebhook?.id }, updateInfo );

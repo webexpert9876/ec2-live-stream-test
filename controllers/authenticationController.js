@@ -21,6 +21,41 @@ exports.registerUser = catchAsyncErrors( async(req, res, next)=>{
 
     const userData = await userModel.create(req.body);
 
+    const message = `<table width="100%" cellpadding="0" cellspacing="0" border="0">
+      <tr>
+        <td align="center">
+          <table width="600" cellpadding="0" cellspacing="0" border="0">
+            <tr>
+              <td>
+                <h1>Welcome to Live Tattoo Stream </h1>
+                <p>Hi ${userData.firstName} ${userData.lastName},</p>
+                <p>Thank you for registering with us. Your account has been successfully created, and you are now a part of our community.</p>
+                <p>You can now log in using your email and password and start exploring:</p>
+                <ul>
+                  <li>Discover new content</li>
+                  <li>Connect with creators</li>
+                </ul>
+                <p><a href="[Login URL]">Click here</a> to log in to your account.</p>
+                <p>If you did not create this account, please ignore this email.</p>
+                <p>Thanks,<br>The Live Tattoo Stream Team</p>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>`;
+
+    try{
+        await sendEmail({
+            email: userData.email,
+            subject: `Registration Successful - Welcome to Live Tattoo Stream`,
+            message,
+            type: 'html'
+        });
+    } catch(error){
+        return next(new ErrorHandler(error.message, 500));
+    }
+
     sendToken(userData, 200, res)
 });
 

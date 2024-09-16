@@ -19,9 +19,9 @@ router.route('/get/all/connected/account').get(getAllConnectedAccount);
 
 router.route('/get/single/connected/account/:id').get(getSingleConnectAccount);
 
-router.route('/remove/connected/account/:id').delete(isAuthenticatedUser, authorizeRoles("admin"), removeConnectAccount);
+router.route('/remove/connected/account/:id').put(isAuthenticatedUser, authorizeRoles("admin"), removeConnectAccount);
 
-router.route('/reject/connected/account/:id').get(isAuthenticatedUser, authorizeRoles("admin"), rejectConnectAccount);
+router.route('/reject/connected/account/:id').put(isAuthenticatedUser, authorizeRoles("admin"), rejectConnectAccount);
 
 router.route('/pause/account/payout/:accountId').put(isAuthenticatedUser, authorizeRoles("admin"), pauseAccountPayout);
 

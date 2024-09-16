@@ -71,10 +71,11 @@ exports.getSingleConnectAccount = catchAsyncErrors(async (req, res, next)=>{
     })
 });
 
-exports.removeConnectAccount = catchAsyncErrors(async (req, res, next)=>{
+exports.rejectConnectAccount = catchAsyncErrors(async (req, res, next)=>{
     
     // const deleted = await stripe.accounts.del('acct_1PkNIwQ8zTwFYept');
     const reject = await stripe.accounts.reject(
+        // 'acct_1Pl98lPraYvRIJRc',
         req.params.id,
         {
           reason: 'other',
@@ -83,27 +84,41 @@ exports.removeConnectAccount = catchAsyncErrors(async (req, res, next)=>{
     let account;
 
     console.log("reject", reject);
+    console.log("reject.charges_enabled", reject.charges_enabled);
+    console.log("reject.payouts_enabled", reject.payouts_enabled);
     
     if(!reject.charges_enabled && !reject.payouts_enabled) {
-        const deleteAccount = await stripeConnectModel.findOne({connectAccountId: deleted.id});
-        const channelDetail = await channelModel.findOne({userId: deleteAccount.userId});
+        const rejectAccount = await stripeConnectModel.findOne({connectAccountId: reject.id});
+        const channelDetail = await channelModel.findOne({userId: rejectAccount.userId});
         console.log('channelDetail', channelDetail);
-        const userDetail = await userModel.findById(deleteAccount.userId);
-        if(deleteAccount){
-            account = await stripeConnectModel.findByIdAndDelete(deleteAccount._id);
+        const userDetail = await userModel.findById(rejectAccount.userId);
+        if(rejectAccount){
+            account = await stripeConnectModel.findByIdAndUpdate(rejectAccount._id, { isAccountCreated: 'rejected', isTransfer: 'rejected', isPayoutEnabled: false, payoutType: 'manual'}, {
+                new: true,
+                runValidators: true,
+                useFindAndModify: false,
+            });
 
             console.log("account", account);
 
-            if(account) {
+            if(account.isAccountCreated == 'rejected') {
+
+                const notificationData = await notificationModel.create({
+                    senderUserId: req.body.adminUserId,
+                    notificationType: 'single',
+                    receiverUserIds: rejectAccount.userId,
+                    message: 'Your Stripe Account has been Rejected by admin.',
+                });
+
                 const message = `
                     <p>Hi ${channelDetail.channelName },</p>
 
                     <p>We hope this message finds you well.</p>
 
-                    <p>We are writing to inform you that your Stripe Connect account has been <strong>removed</strong> by the admin. As a result, you will no longer be able to receive payouts for any earnings generated through our platform.</p>
+                    <p>We are writing to inform you that your Stripe Connect account has been <strong>Rejected</strong> by the admin. As a result, you will no longer be able to receive payouts for any earnings generated through our platform.</p>
 
-                    <h3>Why Was Your Account Removed?</h3>
-                    <p>The admin may have decided to remove your account for one of the following reasons:</p>
+                    <h3>Why Was Your Account Reject?</h3>
+                    <p>The admin may have decided to reject your account for one of the following reasons:</p>
                     <ul>
                         <li><strong>Account inactivity</strong>: If your account has not been active for an extended period.</li>
                         <li><strong>Violations of platform policies</strong>: Non-compliance with our terms of service or guidelines.</li>
@@ -112,12 +127,6 @@ exports.removeConnectAccount = catchAsyncErrors(async (req, res, next)=>{
                     <h3>What Does This Mean for You?</h3>
                     <p>
                         - Any pending payouts to your Stripe account will no longer be processed.<br>
-                        - You will need to create a new Stripe Connect account to resume receiving payouts on the platform.
-                    </p>
-
-                    <h3>What to Do Next:</h3>
-                    <p>If you believe this was done in error or if you would like to continue receiving payouts, please feel free to 
-                        <a href="mailto:support@yourplatform.com">contact our support team</a>. We will be happy to assist you in reactivating your account or guiding you through the steps to create a new one.
                     </p>
 
                     <p>Thank you for your understanding, and we appreciate your contributions to our community.</p>
@@ -132,7 +141,7 @@ exports.removeConnectAccount = catchAsyncErrors(async (req, res, next)=>{
                 try{
                     await sendEmail({
                         email: userDetail.email,
-                        subject:`Important: Your Stripe Account Has Been Removed`,
+                        subject:`Important: Your Stripe Account Has Been Rejected`,
                         message,
                         type: 'html'
                     });
@@ -152,7 +161,7 @@ exports.removeConnectAccount = catchAsyncErrors(async (req, res, next)=>{
 
 });
 
-exports.rejectConnectAccount = catchAsyncErrors(async (req, res, next)=>{
+exports.removeConnectAccount = catchAsyncErrors(async (req, res, next)=>{
     const deleted = await stripe.accounts.del(req.params.id);
     let account;
 
@@ -169,6 +178,13 @@ exports.rejectConnectAccount = catchAsyncErrors(async (req, res, next)=>{
             console.log("account", account);
 
             if(account) {
+                const notificationData = await notificationModel.create({
+                    senderUserId: req.body.adminUserId,
+                    notificationType: 'single',
+                    receiverUserIds: deleteAccount.userId,
+                    message: 'Your Stripe Account Has Been Removed by admin.',
+                });
+
                 const message = `
                     <p>Hi ${channelDetail.channelName },</p>
 
@@ -187,11 +203,6 @@ exports.rejectConnectAccount = catchAsyncErrors(async (req, res, next)=>{
                     <p>
                         - Any pending payouts to your Stripe account will no longer be processed.<br>
                         - You will need to create a new Stripe Connect account to resume receiving payouts on the platform.
-                    </p>
-
-                    <h3>What to Do Next:</h3>
-                    <p>If you believe this was done in error or if you would like to continue receiving payouts, please feel free to 
-                        <a href="mailto:support@yourplatform.com">contact our support team</a>. We will be happy to assist you in reactivating your account or guiding you through the steps to create a new one.
                     </p>
 
                     <p>Thank you for your understanding, and we appreciate your contributions to our community.</p>

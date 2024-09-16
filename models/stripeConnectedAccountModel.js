@@ -19,7 +19,7 @@ const connectedAccountSchema = new mongooose.Schema({
     },
     isAccountCreated: {
         type: String,
-        enum: ['created', 'notCreated', 'pending'],
+        enum: ['created', 'notCreated', 'pending', 'rejected'],
         default: 'notCreated',
         required: [true, "Please provide account created or not"]
     },
@@ -34,7 +34,7 @@ const connectedAccountSchema = new mongooose.Schema({
     },
     payoutType: {
         type: String,
-        default: 'manual'  // payout type is daily and manual
+        default: 'daily'  // payout type is daily and manual
     },
     isRequirementPending: {
         type: Boolean,
